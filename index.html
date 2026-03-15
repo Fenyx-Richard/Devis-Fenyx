@@ -473,64 +473,25 @@ async function parsePDFBuffer(buffer) {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
     const pdfjs = window['pdfjs-dist/build/pdf'];
     pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
     const pdf = await pdfjs.getDocument({data: buffer}).promise;
     let fullText = '';
-    const drawingImages = {}; // pageNum → base64 PNG
-
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
-
-      // ── Extraire le texte ──
       const content = await page.getTextContent();
       const items = content.items.sort((a,b) => {
         const dy = Math.round(b.transform[5]) - Math.round(a.transform[5]);
         return dy !== 0 ? dy : a.transform[4] - b.transform[4];
       });
       let lastY = null;
-      let pageText = '';
       for (const item of items) {
         const y = Math.round(item.transform[5]);
-        if (lastY !== null && Math.abs(y - lastY) > 3) pageText += '\n';
-        pageText += item.str + ' ';
+        if (lastY !== null && Math.abs(y - lastY) > 3) fullText += '\n';
+        fullText += item.str + ' ';
         lastY = y;
       }
-      fullText += pageText + '\n';
-
-      // ── Détecter si page avec dessins ──
-      const hasDrawing = /vue int[eé]rieure/i.test(pageText);
-      if (hasDrawing) {
-        // Rendre la page en canvas haute résolution
-        const scale = 2.5;
-        const viewport = page.getViewport({scale});
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await page.render({canvasContext: ctx, viewport}).promise;
-
-        // Recadrer sur la partie gauche (les deux vues = ~45% gauche)
-        // Recadrage précis: zone dessins = gauche 43%, sans header ni footer
-        // Header (logo+client) = top 20%, dessins = 20% à 76%, footer = 76% à 100%
-        const cropW = Math.round(canvas.width * 0.43);
-        const startY = Math.round(canvas.height * 0.20);
-        const drawH = Math.round(canvas.height * 0.56); // 20% à 76%
-
-        const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = cropW;
-        cropCanvas.height = drawH;
-        const cropCtx = cropCanvas.getContext('2d');
-        cropCtx.fillStyle = 'white';
-        cropCtx.fillRect(0, 0, cropW, drawH);
-        cropCtx.drawImage(canvas, 0, startY, cropW, drawH, 0, 0, cropW, drawH);
-        drawingImages[i] = cropCanvas.toDataURL('image/jpeg', 0.92);
-      }
+      fullText += '\n';
     }
-
-    // Parser le texte et associer les dessins
-    const produits = parsePDFText(fullText, drawingImages);
+    const produits = parsePDFText(fullText);
     if (!produits.length) { showToast('❌ Aucun produit trouvé dans ce PDF', true); return; }
     importerProduits(produits);
   } catch(err) {
@@ -539,7 +500,7 @@ async function parsePDFBuffer(buffer) {
   }
 }
 
-function parsePDFText(text, drawingImages = {}) {
+function parsePDFText(text) {
   const produits = [];
   const fRx = /Fen[eê]tre\s+(\d+)\s+Quantit[eé]\s*:\s*(\d+)\s+Syst[eè]me\s*:\s*([^\n]+?)\s+Couleur\s*:\s*([^\n]+)/gi;
   let m;
@@ -638,15 +599,9 @@ function parsePDFText(text, drawingImages = {}) {
     const typeLabel = {fenetre:'Fen\u00eatre', baie:'Baie vitr\u00e9e', 'porte-fenetre':'Porte-fen\u00eatre'}[type];
     const systLabel = pos.systeme.includes('5000') ? 'PVC Aluplast ID5000' : pos.systeme;
 
-    // Associer le dessin PDF (page = index+1 pour les pages produit)
-    // Les pages avec dessins sont les pages impaires de produits généralement
-    // On les associe dans l'ordre
-    const drawingPageNums = Object.keys(drawingImages).map(Number).sort((a,b)=>a-b);
-    const drawingImg = drawingPageNums[pi] ? drawingImages[drawingPageNums[pi]] : null;
-
     produits.push({
       pdf:true, wpx:true, type, qte:pos.qte,
-      pdfDrawing: drawingImg,
+      pdfDrawing: null,
       designation: typeLabel + ' ' + L + '\u00d7' + H + ' mm \u2014 ' + systLabel,
       largeur: String(L), hauteur: String(H), matiere:'PVC',
       couleur: couleurLabel, couleurCode, systeme: systLabel,
@@ -922,10 +877,20 @@ function renderBody(p) {
   html += `</div>`;
 
   // ── DESSIN ──
-  const drawingContent = p.pdfDrawing
-    ? '<div style="text-align:center;padding:10px"><img src="' + p.pdfDrawing + '" style="max-height:400px;max-width:100%;border:1px solid #2a3a50;border-radius:6px" alt="Dessin technique PDF"/><div style="font-size:10px;color:#8a9ab0;margin-top:6px">Dessin extrait du PDF fournisseur</div></div>'
-    : renderDrawing(p);
-  html += '<div id="tab-content-des-' + p.id + '" style="display:none"><div id="drawing-' + p.id + '">' + drawingContent + '</div></div>';
+  const imgPreview = p.pdfDrawing
+    ? '<div style="text-align:center;margin-bottom:10px"><img src="' + p.pdfDrawing + '" style="max-height:320px;max-width:100%;border:1px solid #2a3a50;border-radius:6px"/></div>'
+    : '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Aucune image — ajoute une capture d'écran ci-dessous</div>';
+  const uploadBtn = '<label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:rgba(200,120,42,0.12);border:1px dashed var(--copper);color:var(--copper-light);padding:8px 16px;border-radius:7px;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-top:6px">'
+    + '📷 ' + (p.pdfDrawing ? 'Changer l'image' : 'Ajouter une image')
+    + '<input type="file" accept="image/*" style="display:none" onchange="setDrawingImage(' + p.id + ', this)">'
+    + '</label>';
+  const clearBtn = p.pdfDrawing
+    ? '<button onclick="clearDrawingImage(' + p.id + ')" style="margin-left:8px;background:none;border:1px solid rgba(224,85,85,0.4);color:#e05555;padding:8px 12px;border-radius:7px;font-size:11px;cursor:pointer;letter-spacing:1px;text-transform:uppercase">✕ Supprimer</button>'
+    : '';
+  html += '<div id="tab-content-des-' + p.id + '" style="display:none">'
+    + '<div id="drawing-' + p.id + '">' + imgPreview + '</div>'
+    + '<div style="text-align:center;margin-top:8px">' + uploadBtn + clearBtn + '</div>'
+    + '</div>';
   return html;
 }
 
@@ -1054,8 +1019,7 @@ function updatePreview(){
     const infos=[p.matiere,dims,ovFr,p.vitrage+' vitrage',p.vitrageOpt!=='standard'?p.vitrageOpt:'',p.secu!=='standard'?'Sécu '+p.secu:'',p.hasVolet?'VR '+(p.voletType==='motorise'?'motorisé '+(p.voletMoteur||''):'manuel'):'',p.imposte?'Imposte':'',p.allege?'Allège':'',p.pieceAppui?"P.d'appui":'',p.notesProduit||''].filter(Boolean).join(' · ');
     let miniDraw='';
     if(p.pdfDrawing){
-      // Image portrait (ratio ~0.77), afficher à taille lisible
-      miniDraw='<div style="margin:6px 0;text-align:center"><img src="' + p.pdfDrawing + '" style="width:140px;border:1px solid #ddd;border-radius:3px;display:inline-block" alt="Dessin technique"/></div>';
+      miniDraw='<div style="margin:6px 0;text-align:center"><img src="' + p.pdfDrawing + '" style="max-width:200px;max-height:150px;border:1px solid #ddd;border-radius:3px;display:inline-block" alt="Dessin technique"/></div>';
     } else if(L&&H&&p.nbVantaux){
       miniDraw=`<div class="prev-drawing"><div><div class="prev-drawing-lbl">Int.</div>${miniSVG(p,55,Math.round(55*parseInt(H)/parseInt(L)),'int')}</div><div><div class="prev-drawing-lbl">Ext.</div>${miniSVG(p,55,Math.round(55*parseInt(H)/parseInt(L)),'ext')}</div></div>`;
     }
@@ -1210,6 +1174,34 @@ function reinitialiser(){
 }
 
 // INIT
+
+function setDrawingImage(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const p = produits.find(x => x.id === id);
+    if (!p) return;
+    p.pdfDrawing = e.target.result;
+    renderProduit(p);
+    // Rouvrir l'onglet dessin
+    const body = document.getElementById('body-' + id);
+    if (body && !body.classList.contains('open')) body.classList.add('open');
+    switchTab(id, 'des');
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearDrawingImage(id) {
+  const p = produits.find(x => x.id === id);
+  if (!p) return;
+  p.pdfDrawing = null;
+  renderProduit(p);
+  switchTab(id, 'des');
+  updatePreview();
+}
+
 window.onload=()=>{
   document.getElementById('headerLogo').src='data:image/png;base64,'+LOGO_B64;
   document.getElementById('devisDate').value=new Date().toISOString().split('T')[0];
