@@ -512,12 +512,11 @@ async function parsePDFBuffer(buffer) {
         await page.render({canvasContext: ctx, viewport}).promise;
 
         // Recadrer sur la partie gauche (les deux vues = ~45% gauche)
-        const cropW = Math.round(canvas.width * 0.42);
-        const cropH = canvas.height;
-
-        // Skip le header (logo + infos entreprise) et ne garder que la zone dessins
-        const startY = Math.round(canvas.height * 0.26); // skip header plus agressif
-        const drawH = Math.round(canvas.height * 0.65);  // zone dessins uniquement
+        // Recadrage précis: zone dessins = gauche 43%, sans header ni footer
+        // Header (logo+client) = top 20%, dessins = 20% à 76%, footer = 76% à 100%
+        const cropW = Math.round(canvas.width * 0.43);
+        const startY = Math.round(canvas.height * 0.20);
+        const drawH = Math.round(canvas.height * 0.56); // 20% à 76%
 
         const cropCanvas = document.createElement('canvas');
         cropCanvas.width = cropW;
@@ -526,8 +525,7 @@ async function parsePDFBuffer(buffer) {
         cropCtx.fillStyle = 'white';
         cropCtx.fillRect(0, 0, cropW, drawH);
         cropCtx.drawImage(canvas, 0, startY, cropW, drawH, 0, 0, cropW, drawH);
-
-        drawingImages[i] = cropCanvas.toDataURL('image/png', 0.85);
+        drawingImages[i] = cropCanvas.toDataURL('image/jpeg', 0.92);
       }
     }
 
@@ -568,20 +566,27 @@ function parsePDFText(text, drawingImages = {}) {
 
     // Vantaux
     // Chercher ouvrants - le texte PDF peut avoir des sauts de ligne entre numéro et description
-    const oMatches = [...bloc.matchAll(/Ouvrant\s+(\d+)\s+([^\n]+)/gi)]
-      .sort((a,b) => parseInt(a[1]) - parseInt(b[1]));
-    // Si un ouvrant a une description vide ou trop courte, chercher la ligne suivante
-    for (const m of oMatches) {
-      if (m[2].trim().length < 3) {
-        const afterIdx = m.index + m[0].length;
-        const nextLine = bloc.slice(afterIdx, afterIdx + 100).split('\n')[0].trim();
-        if (nextLine) m[2] = nextLine;
+    // Parser les ouvrants - le texte PDF 2 colonnes peut mélanger les lignes
+    // Stratégie: chercher tous les marqueurs d'ouvrants ET leur description sur la même ligne ou suivante
+    const ouvrantRaw = [];
+    const ouvRx = /Ouvrant\s+(\d+)\s*([^\n]*)/gi;
+    let ouvM;
+    while ((ouvM = ouvRx.exec(bloc)) !== null) {
+      const num = parseInt(ouvM[1]);
+      let desc = ouvM[2].trim();
+      // Si description trop courte, prendre la ligne suivante
+      if (desc.length < 4) {
+        const rest = bloc.slice(ouvM.index + ouvM[0].length, ouvM.index + ouvM[0].length + 120);
+        const nextLine = rest.split('\n').find(l => l.trim().length > 3);
+        if (nextLine) desc = nextLine.trim();
       }
+      ouvrantRaw.push({num, desc});
     }
+    const oMatches = ouvrantRaw.sort((a,b) => a.num - b.num);
     const hasMeneau = /type de meneau mobile/i.test(bloc);
 
     let vantaux = oMatches.map(m2 => {
-      const d = m2[2].toUpperCase();
+      const d = (m2.desc || m2[2] || '').toUpperCase();
       let type = 'fix';
       if (d.includes('FIX')) type = 'fix';
       else if (d.includes('PSK') || d.includes('TRANSLATION') || d.includes('PATIO')) type = 'coulissant';
@@ -918,7 +923,7 @@ function renderBody(p) {
 
   // ── DESSIN ──
   const drawingContent = p.pdfDrawing
-    ? '<div style="text-align:center;padding:10px"><img src="' + p.pdfDrawing + '" style="max-width:100%;border:1px solid #2a3a50;border-radius:6px" alt="Dessin technique PDF"/><div style="font-size:10px;color:#8a9ab0;margin-top:6px">Dessin extrait du PDF fournisseur</div></div>'
+    ? '<div style="text-align:center;padding:10px"><img src="' + p.pdfDrawing + '" style="max-height:400px;max-width:100%;border:1px solid #2a3a50;border-radius:6px" alt="Dessin technique PDF"/><div style="font-size:10px;color:#8a9ab0;margin-top:6px">Dessin extrait du PDF fournisseur</div></div>'
     : renderDrawing(p);
   html += '<div id="tab-content-des-' + p.id + '" style="display:none"><div id="drawing-' + p.id + '">' + drawingContent + '</div></div>';
   return html;
@@ -1049,7 +1054,8 @@ function updatePreview(){
     const infos=[p.matiere,dims,ovFr,p.vitrage+' vitrage',p.vitrageOpt!=='standard'?p.vitrageOpt:'',p.secu!=='standard'?'Sécu '+p.secu:'',p.hasVolet?'VR '+(p.voletType==='motorise'?'motorisé '+(p.voletMoteur||''):'manuel'):'',p.imposte?'Imposte':'',p.allege?'Allège':'',p.pieceAppui?"P.d'appui":'',p.notesProduit||''].filter(Boolean).join(' · ');
     let miniDraw='';
     if(p.pdfDrawing){
-      miniDraw='<div style="margin:4px 0;text-align:center"><img src="' + p.pdfDrawing + '" style="max-width:180px;border:1px solid #ddd;border-radius:3px" alt="Dessin technique"/></div>';
+      // Image portrait (ratio ~0.77), afficher à taille lisible
+      miniDraw='<div style="margin:6px 0;text-align:center"><img src="' + p.pdfDrawing + '" style="width:140px;border:1px solid #ddd;border-radius:3px;display:inline-block" alt="Dessin technique"/></div>';
     } else if(L&&H&&p.nbVantaux){
       miniDraw=`<div class="prev-drawing"><div><div class="prev-drawing-lbl">Int.</div>${miniSVG(p,55,Math.round(55*parseInt(H)/parseInt(L)),'int')}</div><div><div class="prev-drawing-lbl">Ext.</div>${miniSVG(p,55,Math.round(55*parseInt(H)/parseInt(L)),'ext')}</div></div>`;
     }
@@ -1147,12 +1153,16 @@ async function genererPDF(){
 
     // Ajouter le dessin PDF si disponible
     if (p.pdfDrawing) {
-      const imgH = 28; // hauteur image en mm
+      // L'image crop a ratio ~ 0.43/0.56 = 0.77 (portrait)
+      // Afficher sur toute la largeur disponible
+      const imgW = W - M*2;  // largeur = toute la page
+      const imgH = Math.round(imgW * 0.56 / 0.43); // ratio crop
       if (y + rowH + imgH > 260) { doc.addPage(); y = 20; }
       try {
-        doc.addImage(p.pdfDrawing, 'PNG', M, y + rowH, W - M*2, imgH);
-        y += rowH + imgH + 2;
+        doc.addImage(p.pdfDrawing, 'JPEG', M, y + rowH + 2, imgW, imgH);
+        y += rowH + imgH + 4;
       } catch(e) {
+        console.warn('Image insert failed:', e);
         y += rowH;
       }
     } else {
