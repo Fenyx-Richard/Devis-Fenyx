@@ -273,7 +273,19 @@ function genNumero() {
   try { const n=(parseInt(localStorage.getItem('fenyx_num')||'0')+1); localStorage.setItem('fenyx_num',n); return 'DEV-'+yy+mm+'-'+String(n).padStart(3,'0'); }
   catch(e){ return 'DEV-'+yy+mm+'-001'; }
 }
-function fmt(n){return Number(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function fmt(n){
+  const v = Number(n);
+  if (isNaN(v)) return '0,00 €';
+  return v.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+}
+function fmtPDF(n){
+  // Pour jsPDF: pas de séparateur milliers pour éviter les problèmes d'encodage
+  const v = Number(n);
+  if (isNaN(v)) return '0,00 €';
+  const parts = v.toFixed(2).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return parts.join(',') + ' €';
+}
 function getHT(){return produits.reduce((s,p)=>s+(parseFloat(p.qte)||1)*(parseFloat(p.pu)||0),0);}
 
 // ══════════════════════════════════════════════
@@ -500,12 +512,12 @@ async function parsePDFBuffer(buffer) {
         await page.render({canvasContext: ctx, viewport}).promise;
 
         // Recadrer sur la partie gauche (les deux vues = ~45% gauche)
-        const cropW = Math.round(canvas.width * 0.44);
+        const cropW = Math.round(canvas.width * 0.42);
         const cropH = canvas.height;
 
-        // Détecter le haut réel du dessin (éviter le header logo)
-        const startY = Math.round(canvas.height * 0.22); // skip header
-        const drawH = Math.round(canvas.height * 0.72);  // zone dessin
+        // Skip le header (logo + infos entreprise) et ne garder que la zone dessins
+        const startY = Math.round(canvas.height * 0.26); // skip header plus agressif
+        const drawH = Math.round(canvas.height * 0.65);  // zone dessins uniquement
 
         const cropCanvas = document.createElement('canvas');
         cropCanvas.width = cropW;
@@ -555,8 +567,17 @@ function parsePDFText(text, drawingImages = {}) {
     else if (cb.includes('ch\u00ean') || cb.includes('dor')) { couleurCode='#C8A060'; couleurLabel='Ch\u00eane dor\u00e9'; }
 
     // Vantaux
+    // Chercher ouvrants - le texte PDF peut avoir des sauts de ligne entre numéro et description
     const oMatches = [...bloc.matchAll(/Ouvrant\s+(\d+)\s+([^\n]+)/gi)]
       .sort((a,b) => parseInt(a[1]) - parseInt(b[1]));
+    // Si un ouvrant a une description vide ou trop courte, chercher la ligne suivante
+    for (const m of oMatches) {
+      if (m[2].trim().length < 3) {
+        const afterIdx = m.index + m[0].length;
+        const nextLine = bloc.slice(afterIdx, afterIdx + 100).split('\n')[0].trim();
+        if (nextLine) m[2] = nextLine;
+      }
+    }
     const hasMeneau = /type de meneau mobile/i.test(bloc);
 
     let vantaux = oMatches.map(m2 => {
@@ -1120,25 +1141,39 @@ async function genererPDF(){
     doc.text(doc.splitTextToSize(desc,82)[0],colX[1],y+6);
     if(detail){doc.setFontSize(6.5);doc.setTextColor(100,100,100);doc.text(doc.splitTextToSize(detail,82)[0],colX[1],y+10.5);doc.setFontSize(8);doc.setTextColor(26,26,26);}
     doc.text(String(qte),colX[2]+colW[2],y+6,{align:'right'});
-    doc.text(fmt(pu),colX[3]+colW[3],y+6,{align:'right'});
-    doc.setFont('helvetica','bold');doc.text(fmt(tot),colX[4]+colW[4],y+6,{align:'right'});
-    doc.setFont('helvetica','normal');y+=rowH;
+    doc.text(fmtPDF(pu),colX[3]+colW[3],y+6,{align:'right'});
+    doc.setFont('helvetica','bold');doc.text(fmtPDF(tot),colX[4]+colW[4],y+6,{align:'right'});
+    doc.setFont('helvetica','normal');
+
+    // Ajouter le dessin PDF si disponible
+    if (p.pdfDrawing) {
+      const imgH = 28; // hauteur image en mm
+      if (y + rowH + imgH > 260) { doc.addPage(); y = 20; }
+      try {
+        doc.addImage(p.pdfDrawing, 'PNG', M, y + rowH, W - M*2, imgH);
+        y += rowH + imgH + 2;
+      } catch(e) {
+        y += rowH;
+      }
+    } else {
+      y += rowH;
+    }
   }
 
   y+=4;
   const totX=130;
   const drawRow=(lbl,val,bold,big)=>{if(bold){doc.setFont('helvetica','bold');doc.setFontSize(big?11:8.5);doc.setTextColor(13,27,42);}else{doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);}doc.text(lbl,totX,y);doc.text(val,W-M,y,{align:'right'});y+=6;};
   doc.setDrawColor(220,215,210);doc.setLineWidth(0.3);doc.line(totX,y-1,W-M,y-1);
-  drawRow('Sous-total HT',fmt(ht));drawRow('TVA '+tvaRate+'%',fmt(tva));
+  drawRow('Sous-total HT',fmtPDF(ht));drawRow('TVA '+tvaRate+'%',fmtPDF(tva));
   doc.setDrawColor(200,120,42);doc.setLineWidth(0.6);doc.line(totX,y-1,W-M,y-1);
-  drawRow('TOTAL TTC',fmt(ttc),true,true);y+=4;
+  drawRow('TOTAL TTC',fmtPDF(ttc),true,true);y+=4;
 
   if(y>260){doc.addPage();y=20;}
   const condH=notes?28:22;
   doc.setFillColor(248,244,239);doc.rect(M,y,W-M*2,condH,'F');
   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(13,27,42);doc.text('Conditions :',M+4,y+6);
   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(60,60,60);
-  doc.text(doc.splitTextToSize(`Devis valable ${validite} jours à compter du ${dateStr}. Acompte de ${acompte}% (${fmt(ttc*acompte/100)}) à la commande.${delai?' Délai estimé : '+delai+'.':''}`,W-M*2-8),M+4,y+12);
+  doc.text(doc.splitTextToSize(`Devis valable ${validite} jours à compter du ${dateStr}. Acompte de ${acompte}% (${fmtPDF(ttc*acompte/100)}) à la commande.${delai?' Délai estimé : '+delai+'.':''}`,W-M*2-8),M+4,y+12);
   if(notes)doc.text(doc.splitTextToSize(notes,W-M*2-8),M+4,y+20);y+=condH+8;
 
   if(y>260){doc.addPage();y=20;}
