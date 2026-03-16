@@ -601,7 +601,7 @@ function parsePDFText(text) {
 
     produits.push({
       pdf:true, wpx:true, type, qte:pos.qte,
-      pdfDrawing: null,
+      imgInt: null, imgExt: null,
       designation: typeLabel + ' ' + L + '\u00d7' + H + ' mm \u2014 ' + systLabel,
       largeur: String(L), hauteur: String(H), matiere:'PVC',
       couleur: couleurLabel, couleurCode, systeme: systLabel,
@@ -877,20 +877,26 @@ function renderBody(p) {
   html += `</div>`;
 
   // ── DESSIN ──
-  const imgPreview = p.pdfDrawing
-    ? '<div style="text-align:center;margin-bottom:10px"><img src="' + p.pdfDrawing + '" style="max-height:320px;max-width:100%;border:1px solid #2a3a50;border-radius:6px"/></div>'
-    : '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Aucune image — ajoute une capture d&#39;écran ci-dessous</div>';
-  const uploadBtn = '<label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:rgba(200,120,42,0.12);border:1px dashed var(--copper);color:var(--copper-light);padding:8px 16px;border-radius:7px;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-top:6px">'
-    + '📷 ' + (p.pdfDrawing ? 'Changer l’image' : 'Ajouter une image')
-    + '<input type="file" accept="image/*" style="display:none" onchange="setDrawingImage(' + p.id + ', this)">'
-    + '</label>';
-  const clearBtn = p.pdfDrawing
-    ? '<button onclick="clearDrawingImage(' + p.id + ')" style="margin-left:8px;background:none;border:1px solid rgba(224,85,85,0.4);color:#e05555;padding:8px 12px;border-radius:7px;font-size:11px;cursor:pointer;letter-spacing:1px;text-transform:uppercase">✕ Supprimer</button>'
-    : '';
+  const makeImgSlot = (side, label, img) => {
+    const preview = img
+      ? '<img src="' + img + '" style="width:100%;max-height:200px;object-fit:contain;border:1px solid #2a3a50;border-radius:6px;display:block"/>'
+      : '<div style="height:120px;display:flex;align-items:center;justify-content:center;border:1px dashed #2a3a50;border-radius:6px;color:#8a9ab0;font-size:11px">' + label + '</div>';
+    const btnLabel = img ? '📷 Changer' : '📷 Ajouter';
+    const clearB = img ? '<button onclick="clearDrawingImage(' + p.id + ',\'' + side + '\')" style="margin-top:4px;width:100%;background:none;border:1px solid rgba(224,85,85,0.3);color:#e05555;padding:4px;border-radius:5px;font-size:10px;cursor:pointer">✕ Supprimer</button>' : '';
+    return '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--copper);margin-bottom:6px;text-align:center">' + label + '</div>'
+      + preview
+      + '<label style="display:block;margin-top:6px;text-align:center;cursor:pointer;background:rgba(200,120,42,0.1);border:1px dashed var(--copper);color:var(--copper-light);padding:6px;border-radius:6px;font-size:10px;letter-spacing:1px;text-transform:uppercase">'
+      + btnLabel
+      + '<input type="file" accept="image/*" data-side="' + side + '" style="display:none" onchange="setDrawingImage(' + p.id + ', this)"></label>'
+      + clearB
+      + '</div>';
+  };
   html += '<div id="tab-content-des-' + p.id + '" style="display:none">'
-    + '<div id="drawing-' + p.id + '">' + imgPreview + '</div>'
-    + '<div style="text-align:center;margin-top:8px">' + uploadBtn + clearBtn + '</div>'
-    + '</div>';
+    + '<div style="display:flex;gap:12px;padding:8px">'
+    + makeImgSlot('imgInt', 'Vue intérieure', p.imgInt)
+    + makeImgSlot('imgExt', 'Vue extérieure', p.imgExt)
+    + '</div></div>';
   return html;
 }
 
@@ -1018,8 +1024,10 @@ function updatePreview(){
     const ovFr=p.ouvrants.map(o=>({fixe:'Fixe','battant-g':'Bat.G','battant-d':'Bat.D','ob-g':'OB-G','ob-d':'OB-D'}[o.type]||'?')).join(' / ');
     const infos=[p.matiere,dims,ovFr,p.vitrage+' vitrage',p.vitrageOpt!=='standard'?p.vitrageOpt:'',p.secu!=='standard'?'Sécu '+p.secu:'',p.hasVolet?'VR '+(p.voletType==='motorise'?'motorisé '+(p.voletMoteur||''):'manuel'):'',p.imposte?'Imposte':'',p.allege?'Allège':'',p.pieceAppui?"P.d'appui":'',p.notesProduit||''].filter(Boolean).join(' · ');
     let miniDraw='';
-    if(p.pdfDrawing){
-      miniDraw='<div style="margin:6px 0;text-align:center"><img src="' + p.pdfDrawing + '" style="max-width:200px;max-height:150px;border:1px solid #ddd;border-radius:3px;display:inline-block" alt="Dessin technique"/></div>';
+    if(p.imgInt || p.imgExt){
+      const iInt = p.imgInt ? '<div style="flex:1;text-align:center"><div style="font-size:7px;color:#888;margin-bottom:2px">VUE INTÉRIEURE</div><img src="' + p.imgInt + '" style="max-width:100%;max-height:90px;object-fit:contain;border:1px solid #ddd;border-radius:2px"/></div>' : '<div style="flex:1;height:80px;border:1px dashed #ddd;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#bbb">Int.</div>';
+      const iExt = p.imgExt ? '<div style="flex:1;text-align:center"><div style="font-size:7px;color:#888;margin-bottom:2px">VUE EXTÉRIEURE</div><img src="' + p.imgExt + '" style="max-width:100%;max-height:90px;object-fit:contain;border:1px solid #ddd;border-radius:2px"/></div>' : '<div style="flex:1;height:80px;border:1px dashed #ddd;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#bbb">Ext.</div>';
+      miniDraw='<div style="display:flex;gap:6px;margin:6px 0">' + iInt + iExt + '</div>';
     } else if(L&&H&&p.nbVantaux){
       miniDraw=`<div class="prev-drawing"><div><div class="prev-drawing-lbl">Int.</div>${miniSVG(p,55,Math.round(55*parseInt(H)/parseInt(L)),'int')}</div><div><div class="prev-drawing-lbl">Ext.</div>${miniSVG(p,55,Math.round(55*parseInt(H)/parseInt(L)),'ext')}</div></div>`;
     }
@@ -1050,7 +1058,8 @@ function updatePreview(){
 async function genererPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
-  const W=210,M=15;
+  const W=210, M=12;
+
   const nom=document.getElementById('clientNom').value||'—';
   const tel=document.getElementById('clientTel').value||'';
   const email=document.getElementById('clientEmail').value||'';
@@ -1062,104 +1071,219 @@ async function genererPDF(){
   const delai=document.getElementById('delai').value||'';
   const notes=document.getElementById('notes').value||'';
   const tvaRate=parseFloat(document.getElementById('tva-select').value);
-  const ht=getHT(),tva=ht*tvaRate/100,ttc=ht+tva;
+  const ht=getHT(), tva=ht*tvaRate/100, ttc=ht+tva;
 
-  // Header
-  doc.setFillColor(13,27,42);doc.rect(0,0,W,38,'F');
-  try{doc.addImage('data:image/png;base64,'+LOGO_B64,'PNG',M,4,34,26);}catch(e){}
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(200,160,96);
-  doc.text('FENYX OUVERTURES',W-M,12,{align:'right'});
-  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(138,154,176);
-  doc.text('REDONNER VIE À VOS MENUISERIES',W-M,17,{align:'right'});
-  doc.setFontSize(7.5);doc.setTextColor(180,195,210);
-  doc.text('133 rue Louis Montois — 59790 Ronchin',W-M,23,{align:'right'});
-  doc.text('06 19 04 51 94  ·  contact.fenyxouvertures@gmail.com',W-M,28,{align:'right'});
+  // ── HEADER ──
+  doc.setFillColor(13,27,42); doc.rect(0,0,W,36,'F');
+  try{ doc.addImage('data:image/png;base64,'+LOGO_B64,'PNG',M,3,32,28); }catch(e){}
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(200,160,96);
+  doc.text('FENYX OUVERTURES',W-M,11,{align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(138,154,176);
+  doc.text('REDONNER VIE À VOS MENUISERIES',W-M,16,{align:'right'});
+  doc.setFontSize(7.5); doc.setTextColor(180,195,210);
+  doc.text('133 rue Louis Montois — 59790 Ronchin',W-M,21,{align:'right'});
+  doc.text('06 19 04 51 94  ·  contact.fenyxouvertures@gmail.com',W-M,26,{align:'right'});
 
-  let y=46;
-  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(13,27,42);doc.text('DEVIS',M,y);
-  doc.setFontSize(9);doc.setTextColor(200,120,42);doc.text(devisNum+'  ·  '+dateStr,M,y+6);
-  doc.setDrawColor(200,120,42);doc.setLineWidth(0.6);doc.line(M,y+9,W-M,y+9);y+=16;
+  let y=44;
 
-  // Client
-  doc.setFillColor(248,244,239);doc.rect(M,y,W-M*2,22,'F');
-  doc.setFillColor(200,120,42);doc.rect(M,y,2,22,'F');
-  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(136,136,136);doc.text('CLIENT',M+6,y+6);
-  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(26,26,26);doc.text(nom,M+6,y+13);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100,100,100);
-  doc.text([adresse,tel,email].filter(Boolean).join('  ·  '),M+6,y+19);y+=28;
+  // ── TITRE DEVIS ──
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(13,27,42);
+  doc.text('DEVIS',M,y);
+  doc.setFontSize(9); doc.setTextColor(200,120,42);
+  doc.text(devisNum+'  ·  '+dateStr,M,y+6);
+  doc.setDrawColor(200,120,42); doc.setLineWidth(0.6);
+  doc.line(M,y+9,W-M,y+9);
+  y+=16;
 
-  // Table header
-  const colX=[M,M+8,M+92,M+106,M+132],colW=[8,84,14,26,26];
-  doc.setFillColor(13,27,42);doc.rect(M,y,W-M*2,8,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(200,160,96);
-  ['#','Désignation','Qté','P.U. HT','Total HT'].forEach((h,i)=>{const align=i>=2?'right':'left';doc.text(h,i>=2?colX[i]+colW[i]:colX[i],y+5.5,{align});});y+=8;
+  // ── CLIENT ──
+  doc.setFillColor(248,244,239); doc.rect(M,y,W-M*2,20,'F');
+  doc.setFillColor(200,120,42); doc.rect(M,y,2,20,'F');
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(136,136,136);
+  doc.text('CLIENT',M+5,y+5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,26,26);
+  doc.text(nom,M+5,y+12);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100,100,100);
+  doc.text([adresse,tel,email].filter(Boolean).join('  ·  '),M+5,y+18);
+  y+=26;
 
-  for(let idx=0;idx<produits.length;idx++){
-    const p=produits[idx];const cfg=TYPES[p.type]||TYPES['autre'];
-    const qte=parseFloat(p.qte)||1,pu=parseFloat(p.pu)||0,tot=qte*pu;
-    const L=p.largeur||p.L||'';const H=p.hauteur||p.H||'';
-    const dims=L&&H?L+'×'+H+' mm':'';
-    const ovFr=p.ouvrants.map(o=>({fixe:'Fixe','battant-g':'Battant gauche','battant-d':'Battant droit','ob-g':'OB gauche','ob-d':'OB droit'}[o.type]||'?')).join(' / ');
-    const desc=[p.designation||cfg.label,dims,p.matiere].filter(Boolean).join(' — ');
-    const detail=[ovFr,p.vitrage+' vitrage',p.vitrageOpt!=='standard'?p.vitrageOpt:'',p.secu!=='standard'?'Sécurité '+p.secu:'',p.hasVolet?'VR '+(p.voletType==='motorise'?'motorisé '+(p.voletMoteur||''):'manuel')+'  commande: '+p.voletPosition:'',p.imposte?'Imposte':'',p.allege?'Allège':'',p.pieceAppui?"Pièce d'appui":'',p.notesProduit||''].filter(Boolean).join(' · ');
-    const rowH=detail?13:9;
-    if(y+rowH>260){doc.addPage();y=20;}
-    if(idx%2===1){doc.setFillColor(250,248,245);doc.rect(M,y,W-M*2,rowH,'F');}
-    doc.setDrawColor(230,225,220);doc.setLineWidth(0.2);doc.line(M,y+rowH,W-M,y+rowH);
-    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(26,26,26);
-    doc.text(String(idx+1),colX[0],y+6);
-    doc.text(doc.splitTextToSize(desc,82)[0],colX[1],y+6);
-    if(detail){doc.setFontSize(6.5);doc.setTextColor(100,100,100);doc.text(doc.splitTextToSize(detail,82)[0],colX[1],y+10.5);doc.setFontSize(8);doc.setTextColor(26,26,26);}
-    doc.text(String(qte),colX[2]+colW[2],y+6,{align:'right'});
-    doc.text(fmtPDF(pu),colX[3]+colW[3],y+6,{align:'right'});
-    doc.setFont('helvetica','bold');doc.text(fmtPDF(tot),colX[4]+colW[4],y+6,{align:'right'});
-    doc.setFont('helvetica','normal');
+  // ── ENTÊTE TABLEAU ──
+  // Colonnes: [Descriptif+Photos | Qté | PU HT | TVA | PU TTC | Total HT | Total TTC]
+  const col = {
+    photos: M,        photosW: 58,   // photos vue int/ext
+    desc:   M+58,     descW:   56,   // descriptif
+    qte:    M+114,    qteW:    10,
+    puht:   M+124,    puhtW:   18,
+    tva:    M+142,    tvaW:    11,
+    puttc:  M+153,    puttcW:  18,
+    totht:  M+171,    tothtW:  18,
+    tottc:  M+189,    tottcW:  W-M-189,
+  };
 
-    // Ajouter le dessin PDF si disponible
-    if (p.pdfDrawing) {
-      // L'image crop a ratio ~ 0.43/0.56 = 0.77 (portrait)
-      // Afficher sur toute la largeur disponible
-      const imgW = W - M*2;  // largeur = toute la page
-      const imgH = Math.round(imgW * 0.56 / 0.43); // ratio crop
-      if (y + rowH + imgH > 260) { doc.addPage(); y = 20; }
-      try {
-        doc.addImage(p.pdfDrawing, 'JPEG', M, y + rowH + 2, imgW, imgH);
-        y += rowH + imgH + 4;
-      } catch(e) {
-        console.warn('Image insert failed:', e);
-        y += rowH;
-      }
+  // Header row
+  doc.setFillColor(13,27,42); doc.rect(M,y,W-M*2,7,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(200,160,96);
+  const headers = [
+    [col.photos+col.photosW/2, 'DESCRIPTIF', 'center'],
+    [col.qte+col.qteW/2,       'QTÉ',        'center'],
+    [col.puht+col.puhtW-1,     'PU HT',      'right'],
+    [col.tva+col.tvaW/2,       'TVA',        'center'],
+    [col.puttc+col.puttcW-1,   'PU TTC',     'right'],
+    [col.totht+col.tothtW-1,   'Total HT',   'right'],
+    [col.tottc+col.tottcW-1,   'Total TTC',  'right'],
+  ];
+  headers.forEach(([x,label,align]) => doc.text(label, x, y+4.8, {align}));
+  // Ligne séparation photos/desc
+  doc.setDrawColor(200,160,96); doc.setLineWidth(0.3);
+  doc.line(col.desc, y, col.desc, y+7);
+  y+=7;
+
+  // ── LIGNES PRODUITS ──
+  for(let idx=0; idx<produits.length; idx++){
+    const p = produits[idx];
+    const cfg = TYPES[p.type]||TYPES['autre'];
+    const qte = parseFloat(p.qte)||1;
+    const pu  = parseFloat(p.pu)||0;
+    const totHT = qte*pu;
+    const tvaCoeff = tvaRate/100;
+    const puTTC = pu*(1+tvaCoeff);
+    const totTTC = totHT*(1+tvaCoeff);
+
+    // Construire le texte descriptif
+    const L=p.largeur||p.L||''; const H=p.hauteur||p.H||'';
+    const dims = L&&H ? 'Taille '+L+'x'+H : '';
+    const ouvDesc = p.ouvrants.map(o=>({fix:'Fixe','ob-d':'OB droit','ob-g':'OB gauche','bat-d':'Battant droit','bat-g':'Battant gauche',coulissant:'Coulissant'}[o.type]||o.type)).join(' / ');
+    const vitrDesc = (p.vitrage==='triple'?'Triple':'Double')+' vitrage'+(p.vitrageOpt!=='standard'?' '+p.vitrageOpt:'');
+    const descLines = [
+      p.designation||cfg.label,
+      p.matiere+' · '+ouvDesc,
+      vitrDesc,
+      p.hasVolet?'VR motorisé '+(p.voletMoteur||''):'',
+      p.imposte&&p.imposteH?'Imposte '+p.imposteH+' mm':'',
+      p.allege&&p.allegeH?'Allège '+p.allegeH+' mm':'',
+      p.pieceAppui?"Pièce d'appui":'',
+      dims,
+      p.notesProduit||'',
+    ].filter(Boolean);
+
+    // Calculer hauteur ligne
+    const lineH = 4.2;
+    const descTextLines = [];
+    descLines.forEach(l => {
+      const wrapped = doc.splitTextToSize(l, col.descW-3);
+      wrapped.forEach(wl => descTextLines.push(wl));
+    });
+
+    const photoH = (p.imgInt||p.imgExt) ? 50 : 0;
+    const textH  = descTextLines.length * lineH + 6;
+    const rowH   = Math.max(photoH, textH) + 4;
+
+    // Saut de page
+    if(y+rowH > 272){ doc.addPage(); y=15; }
+
+    // Fond alterné
+    if(idx%2===1){ doc.setFillColor(250,248,245); doc.rect(M,y,W-M*2,rowH,'F'); }
+    doc.setDrawColor(220,215,210); doc.setLineWidth(0.2);
+
+    // ── Photos ──
+    const imgSlotW = (col.photosW-3)/2;
+    const imgSlotH = rowH-4;
+    if(p.imgInt){
+      try{
+        doc.addImage(p.imgInt,'JPEG',col.photos+1,y+2,imgSlotW,imgSlotH-5);
+        doc.setFontSize(5.5); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
+        doc.text('VUE INTÉRIEURE',col.photos+1+imgSlotW/2,y+rowH-3,{align:'center'});
+      }catch(e){}
     } else {
-      y += rowH;
+      doc.setFillColor(245,245,245); doc.rect(col.photos+1,y+2,imgSlotW,imgSlotH,'F');
+      doc.setFontSize(5); doc.setTextColor(180,180,180);
+      doc.text('Int.',col.photos+1+imgSlotW/2,y+rowH/2,{align:'center'});
     }
+    if(p.imgExt){
+      try{
+        doc.addImage(p.imgExt,'JPEG',col.photos+1+imgSlotW+1,y+2,imgSlotW,imgSlotH-5);
+        doc.setFontSize(5.5); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
+        doc.text('VUE EXTÉRIEURE',col.photos+1+imgSlotW+1+imgSlotW/2,y+rowH-3,{align:'center'});
+      }catch(e){}
+    } else {
+      doc.setFillColor(245,245,245); doc.rect(col.photos+1+imgSlotW+1,y+2,imgSlotW,imgSlotH,'F');
+      doc.setFontSize(5); doc.setTextColor(180,180,180);
+      doc.text('Ext.',col.photos+1+imgSlotW+1+imgSlotW/2,y+rowH/2,{align:'center'});
+    }
+
+    // Séparateur photos/desc
+    doc.setDrawColor(200,215,230); doc.setLineWidth(0.3);
+    doc.line(col.desc,y,col.desc,y+rowH);
+
+    // ── Descriptif ──
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(13,27,42);
+    let ty = y+5;
+    doc.text(p.designation||cfg.label, col.desc+2, ty);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(60,60,60);
+    ty += 4.5;
+    descLines.slice(1).forEach(l => {
+      const wrapped = doc.splitTextToSize(l, col.descW-3);
+      wrapped.forEach(wl => {
+        doc.text(wl, col.desc+2, ty);
+        ty += lineH;
+      });
+    });
+
+    // ── Chiffres ──
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(26,26,26);
+    const cy = y + rowH/2 + 2.5;
+    doc.text(String(qte),              col.qte+col.qteW/2,     cy, {align:'center'});
+    doc.text(fmtPDF(pu),               col.puht+col.puhtW-1,   cy, {align:'right'});
+    doc.text(tvaRate+'%',              col.tva+col.tvaW/2,     cy, {align:'center'});
+    doc.text(fmtPDF(puTTC),            col.puttc+col.puttcW-1, cy, {align:'right'});
+    doc.text(fmtPDF(totHT),            col.totht+col.tothtW-1, cy, {align:'right'});
+    doc.setFont('helvetica','bold');
+    doc.text(fmtPDF(totTTC),           col.tottc+col.tottcW-1, cy, {align:'right'});
+
+    // Ligne de séparation
+    doc.setDrawColor(220,215,210); doc.setLineWidth(0.2);
+    doc.line(M,y+rowH,W-M,y+rowH);
+    y+=rowH;
   }
 
   y+=4;
-  const totX=130;
-  const drawRow=(lbl,val,bold,big)=>{if(bold){doc.setFont('helvetica','bold');doc.setFontSize(big?11:8.5);doc.setTextColor(13,27,42);}else{doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);}doc.text(lbl,totX,y);doc.text(val,W-M,y,{align:'right'});y+=6;};
-  doc.setDrawColor(220,215,210);doc.setLineWidth(0.3);doc.line(totX,y-1,W-M,y-1);
-  drawRow('Sous-total HT',fmtPDF(ht));drawRow('TVA '+tvaRate+'%',fmtPDF(tva));
-  doc.setDrawColor(200,120,42);doc.setLineWidth(0.6);doc.line(totX,y-1,W-M,y-1);
-  drawRow('TOTAL TTC',fmtPDF(ttc),true,true);y+=4;
 
-  if(y>260){doc.addPage();y=20;}
-  const condH=notes?28:22;
-  doc.setFillColor(248,244,239);doc.rect(M,y,W-M*2,condH,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(13,27,42);doc.text('Conditions :',M+4,y+6);
-  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(60,60,60);
-  doc.text(doc.splitTextToSize(`Devis valable ${validite} jours à compter du ${dateStr}. Acompte de ${acompte}% (${fmtPDF(ttc*acompte/100)}) à la commande.${delai?' Délai estimé : '+delai+'.':''}`,W-M*2-8),M+4,y+12);
-  if(notes)doc.text(doc.splitTextToSize(notes,W-M*2-8),M+4,y+20);y+=condH+8;
+  // ── TOTAUX ──
+  const totX = col.totht;
+  const totW = W-M-totX;
+  if(y+30>272){doc.addPage();y=15;}
+  doc.setFillColor(248,244,239); doc.rect(totX,y,totW,26,'F');
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+  doc.text('Sous-total HT',        totX+3,    y+6);  doc.text(fmtPDF(ht),     W-M-1, y+6,  {align:'right'});
+  doc.text('TVA '+tvaRate+'%',     totX+3,    y+13); doc.text(fmtPDF(tva),    W-M-1, y+13, {align:'right'});
+  doc.setDrawColor(200,120,42); doc.setLineWidth(0.5); doc.line(totX,y+16,W-M,y+16);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(13,27,42);
+  doc.text('TOTAL TTC',            totX+3,    y+23); doc.text(fmtPDF(ttc),    W-M-1, y+23, {align:'right'});
+  y+=32;
 
-  if(y>260){doc.addPage();y=20;}
+  // ── CONDITIONS ──
+  if(y+22>272){doc.addPage();y=15;}
+  doc.setFillColor(248,244,239); doc.rect(M,y,W-M*2,22,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(13,27,42);
+  doc.text('Conditions :', M+4, y+6);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(60,60,60);
+  const condTxt = 'Devis valable '+validite+' jours à compter du '+dateStr+'. Acompte de '+acompte+'% ('+fmtPDF(ttc*acompte/100)+') à la commande.'+(delai?' Délai estimé : '+delai+'.':'');
+  doc.text(doc.splitTextToSize(condTxt,W-M*2-8), M+4, y+12);
+  if(notes) doc.text(doc.splitTextToSize(notes,W-M*2-8), M+4, y+18);
+  y+=28;
+
+  // ── SIGNATURES ──
+  if(y+22>272){doc.addPage();y=15;}
   const sigW=(W-M*2-8)/2;
-  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);
-  doc.rect(M,y,sigW,22);doc.rect(M+sigW+8,y,sigW,22);
-  doc.setFontSize(7);doc.setTextColor(150,150,150);
-  doc.text('BON POUR ACCORD — DATE & SIGNATURE CLIENT',M+3,y+5);
-  doc.text('CACHET & SIGNATURE FENYX OUVERTURES',M+sigW+11,y+5);
-  doc.setFillColor(13,27,42);doc.rect(0,285,W,12,'F');
-  doc.setFontSize(7);doc.setTextColor(138,154,176);
-  doc.text('Fenyx Ouvertures  ·  SIRET : _____________  ·  TVA intracommunautaire : FR_____________',W/2,292,{align:'center'});
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.3);
+  doc.rect(M,y,sigW,22); doc.rect(M+sigW+8,y,sigW,22);
+  doc.setFontSize(6.5); doc.setTextColor(150,150,150);
+  doc.text('BON POUR ACCORD — DATE & SIGNATURE CLIENT', M+3, y+5);
+  doc.text('CACHET & SIGNATURE FENYX OUVERTURES', M+sigW+11, y+5);
+
+  // ── FOOTER ──
+  doc.setFillColor(13,27,42); doc.rect(0,285,W,12,'F');
+  doc.setFontSize(6.5); doc.setTextColor(138,154,176);
+  doc.text('Fenyx Ouvertures  ·  SIRET : _____________  ·  TVA intracommunautaire : FR_____________', W/2, 292, {align:'center'});
 
   doc.save('Devis-'+devisNum+'-'+nom.replace(/\s+/g,'-')+'.pdf');
 }
@@ -1182,7 +1306,7 @@ function setDrawingImage(id, input) {
   reader.onload = e => {
     const p = produits.find(x => x.id === id);
     if (!p) return;
-    p.pdfDrawing = e.target.result;
+    p[input.dataset.side] = e.target.result;
     renderProduit(p);
     // Rouvrir l'onglet dessin
     const body = document.getElementById('body-' + id);
@@ -1196,7 +1320,7 @@ function setDrawingImage(id, input) {
 function clearDrawingImage(id) {
   const p = produits.find(x => x.id === id);
   if (!p) return;
-  p.pdfDrawing = null;
+  p.imgInt = null; p.imgExt = null;
   renderProduit(p);
   switchTab(id, 'des');
   updatePreview();
