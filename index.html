@@ -11,31 +11,22 @@
   --copper:#c8782a; --copper-light:#e8a050; --gold:#d4a843;
   --text:#e8ddd0; --text-muted:#8a9ab0;
   --border:rgba(200,120,42,0.2); --radius:10px;
-  --green:#1a6a3a;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--navy);color:var(--text);min-height:100vh;font-size:13px;}
-
-/* HEADER */
 .app-header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;box-shadow:0 4px 30px rgba(0,0,0,0.4);}
 .app-header img{height:42px;filter:drop-shadow(0 0 10px rgba(200,120,42,0.5));}
 .app-header-text h1{font-size:16px;font-weight:600;letter-spacing:3px;color:var(--copper-light);text-transform:uppercase;}
 .app-header-text p{font-size:9px;color:var(--text-muted);letter-spacing:2px;}
 .header-actions{margin-left:auto;display:flex;gap:6px;align-items:center;}
-
-/* LAYOUT */
 .app-body{display:flex;min-height:calc(100vh - 63px);}
 .panel-form{width:58%;padding:20px;border-right:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 63px);}
 .panel-preview{width:42%;padding:20px;background:var(--navy2);overflow-y:auto;max-height:calc(100vh - 63px);}
-
-/* SECTIONS */
 .section{margin-bottom:20px;}
 .section-title{font-size:10px;letter-spacing:3px;color:var(--copper);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-weight:600;}
 .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
-
-/* FORMS */
 .form-grid{display:grid;gap:8px;}
-.g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:1fr 1fr 1fr;} .g4{grid-template-columns:1fr 1fr 1fr 1fr;} .g1{grid-template-columns:1fr;}
+.g1{grid-template-columns:1fr;} .g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:1fr 1fr 1fr;}
 .form-group{display:flex;flex-direction:column;gap:3px;}
 .form-group label{font-size:10px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;}
 .form-group input,.form-group select,.form-group textarea{background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;transition:border-color 0.2s;}
@@ -45,20 +36,16 @@ select option{background:var(--navy3);}
 .checkbox-row{display:flex;align-items:center;gap:8px;padding:5px 0;}
 .checkbox-row label{font-size:12px;color:var(--text);cursor:pointer;letter-spacing:0;text-transform:none;}
 input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:pointer;}
-
-/* TABS */
 .tabs{display:flex;gap:2px;margin-bottom:12px;background:var(--navy3);padding:3px;border-radius:7px;}
 .tab{flex:1;padding:6px;text-align:center;border-radius:5px;cursor:pointer;font-size:10px;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;color:var(--text-muted);}
 .tab.active{background:var(--copper);color:white;font-weight:600;}
-
-/* PRODUCT CARD */
 .product-card{background:var(--navy3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;animation:slideIn 0.2s ease;}
 @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .product-card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:rgba(0,0,0,0.15);border-bottom:1px solid var(--border);}
 .product-card-header:hover{background:rgba(200,120,42,0.08);}
 .card-num{background:var(--copper);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
 .card-title{flex:1;font-size:12px;font-weight:500;color:var(--copper-light);}
-.card-subtitle{font-size:9px;color:var(--text-muted);}
+.card-subtitle{font-size:9px;color:var(--text-muted);margin-top:2px;}
 .card-total{font-size:13px;color:var(--gold);font-weight:600;}
 .card-toggle{color:var(--text-muted);font-size:11px;transition:transform 0.2s;}
 .card-toggle.open{transform:rotate(180deg);}
@@ -66,22 +53,24 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
 .btn-del:hover{color:#e05555;background:rgba(224,85,85,0.1);}
 .product-card-body{padding:12px;display:none;}
 .product-card-body.open{display:block;}
-
-/* CONFIGURATOR CASCADE */
+/* CASCADE */
 .config-cascade{background:rgba(0,0,0,0.15);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;}
 .config-step{margin-bottom:8px;}
+.config-step:last-child{margin-bottom:0;}
 .config-step label{display:block;font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:4px;}
-.config-step select{width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;transition:border-color 0.2s;}
-.config-step select:focus{border-color:var(--copper);}
-.config-step select:disabled{opacity:0.4;cursor:not-allowed;}
+.config-step select,.config-step input[type=text]{width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;transition:border-color 0.2s;}
+.config-step select:focus,.config-step input[type=text]:focus{border-color:var(--copper);}
+.config-step select:disabled{opacity:0.38;cursor:not-allowed;}
 .config-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .config-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.designation-box{background:var(--navy4);border:1px solid var(--copper);border-radius:6px;padding:8px 12px;font-size:11px;color:var(--copper-light);font-style:italic;margin:8px 0;min-height:36px;line-height:1.5;}
-.designation-box.empty{color:var(--text-muted);font-style:normal;}
-
-/* SVG DRAWING */
+.designation-box{background:var(--navy4);border:1px solid var(--copper);border-radius:6px;padding:8px 12px;font-size:11px;color:var(--copper-light);font-style:italic;margin:8px 0;min-height:36px;line-height:1.6;}
+.designation-box.empty{color:var(--text-muted);font-style:normal;border-color:var(--border);}
+/* separator inside cascade */
+.cascade-sep{height:1px;background:var(--border);margin:8px 0;}
+/* "Autre" badge label */
+.autre-badge{display:inline-block;background:rgba(200,120,42,0.15);border:1px solid rgba(200,120,42,0.35);color:var(--copper-light);border-radius:4px;padding:1px 7px;font-size:9px;letter-spacing:1px;margin-left:6px;vertical-align:middle;}
+/* SVG */
 .drawing-container{background:white;border-radius:6px;padding:8px;margin:8px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
-
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:7px;font-family:inherit;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all 0.2s;font-weight:500;}
 .btn-primary{background:linear-gradient(135deg,var(--copper),var(--copper-light));color:white;width:100%;justify-content:center;font-size:12px;padding:12px;box-shadow:0 4px 20px rgba(200,120,42,0.3);}
@@ -91,24 +80,15 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
 .btn-ghost{background:var(--navy3);border:1px solid var(--border);color:var(--text);}
 .btn-ghost:hover{border-color:var(--copper);color:var(--copper-light);}
 .btn-sm{padding:5px 10px;font-size:10px;}
-
-/* TAGS */
 .tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
 .tag{background:rgba(200,120,42,0.1);border:1px solid rgba(200,120,42,0.3);color:var(--copper-light);border-radius:20px;padding:3px 10px;font-size:10px;letter-spacing:1px;cursor:pointer;transition:all 0.15s;}
 .tag:hover{background:rgba(200,120,42,0.25);}
-
-/* TOTAUX */
 .totaux-box{background:var(--navy3);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:14px;}
 .totaux-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.04);}
 .totaux-row.ttc{font-size:17px;color:var(--gold);font-weight:700;border-bottom:none;margin-top:5px;}
-
-/* VOLET */
-.volet-block{background:rgba(200,120,42,0.06);border:1px solid rgba(200,120,42,0.2);border-radius:8px;padding:10px;margin-top:6px;}
-
 /* PREVIEW */
 .preview-box{background:white;border-radius:8px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.5);color:#1a1a1a;font-size:11px;}
 .prev-header{background:#0d1b2a;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
-.prev-header img{height:36px;}
 .prev-header-r{text-align:right;color:white;}
 .prev-co-name{font-size:13px;letter-spacing:3px;color:#c8a060;font-weight:600;}
 .prev-co-sub{font-size:7px;color:#8a9ab0;letter-spacing:1px;}
@@ -132,12 +112,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
 .prev-sigs{display:flex;gap:10px;margin-bottom:8px;}
 .prev-sig{flex:1;border:1px solid #ddd;border-radius:4px;padding:6px;min-height:44px;font-size:7px;color:#aaa;letter-spacing:1px;}
 .prev-footer{background:#0d1b2a;color:#8a9ab0;padding:7px 18px;text-align:center;font-size:7px;letter-spacing:1px;}
-.prev-drawing{display:flex;gap:8px;justify-content:center;margin:4px 0;}
-.prev-drawing-lbl{font-size:7px;color:#888;text-align:center;margin-top:2px;}
-
-/* MISC */
 .divider{height:1px;background:var(--border);margin:16px 0;}
-.info-box{background:rgba(200,120,42,0.07);border:1px solid rgba(200,120,42,0.2);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--text-muted);margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -156,6 +131,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
 
 <div class="app-body">
   <div class="panel-form">
+
     <div class="section">
       <div class="section-title">Informations client</div>
       <div class="form-grid g2">
@@ -175,7 +151,8 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
         <span class="tag" onclick="ajouterProduit('fenetre')">+ Fenêtre</span>
         <span class="tag" onclick="ajouterProduit('porte-fenetre')">+ Porte-fenêtre</span>
         <span class="tag" onclick="ajouterProduit('porte-entree')">+ Porte d'entrée</span>
-        <span class="tag" onclick="ajouterProduit('baie')">+ Baie vitrée</span>
+        <span class="tag" onclick="ajouterProduit('baie-psk')">+ Baie PSK</span>
+        <span class="tag" onclick="ajouterProduit('baie-coul')">+ Baie coulissante</span>
         <span class="tag" onclick="ajouterProduit('garage')">+ Porte de garage</span>
         <span class="tag" onclick="ajouterProduit('volet')">+ Volet roulant</span>
         <span class="tag" onclick="ajouterProduit('autre')">+ Autre</span>
@@ -223,182 +200,195 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
 
 <script>
 // ══════════════════════════════════════════════
-// LOGO BASE64 (placeholder - remplacer par le vrai logo)
+// CATALOGUE
+// Structure : matiere → fabricant → gamme (pour PVC)
+//             matiere → gamme (pour Alu, etc.)
+// Pour PVC on a un niveau de plus : Fabricant → Gamme/profilé
 // ══════════════════════════════════════════════
-const LOGO_B64 = "";
 
-// ══════════════════════════════════════════════
-// DONNÉES CONFIGURATEUR CASCADE
-// ══════════════════════════════════════════════
+// Vitrages communs
+const VIT_STD   = ["Double vitrage 4/16/4 Argon", "Triple vitrage 4/16/4/16/4 Argon", "Feuilleté 44.2 sécurité", "Feuilleté 44.2 + DV Argon", "Contrôle solaire"];
+const VIT_PORTE = ["Plein (sans vitrage)", "Vitré haut", "Vitré latéral droit", "Vitré latéral gauche", "Vitré total", "Ornemental"];
+const VIT_BAIE  = ["Double vitrage 4/16/4 Argon", "Triple vitrage 4/16/4/16/4 Argon", "Feuilleté 44.2 sécurité", "Contrôle solaire"];
+
+// Gammes Aluplast fenêtre/PF/PE
+const ALUPLAST_FENPF = [
+  { gamme: "IDEAL 4000", epaisseur: "70mm" },
+  { gamme: "IDEAL 5000", epaisseur: "70mm" },
+  { gamme: "IDEAL 7000", epaisseur: "85mm" },
+  { gamme: "IDEAL 8000", epaisseur: "85mm" },
+  { gamme: "NEO MD",     epaisseur: "76mm" },
+];
+// Gammes Aluplast baie PSK
+const ALUPLAST_PSK = [
+  { gamme: "Smart Slide",     epaisseur: "" },
+  { gamme: "Smart Slide NEO", epaisseur: "" },
+  { gamme: "Multi Slide",     epaisseur: "" },
+  { gamme: "HST",             epaisseur: "" },
+];
+
+// PVC fabricants génériques (pour Veka et Kömmerling : à compléter)
+function pvcFabricants(gammes) {
+  return {
+    "Aluplast": { type: "catalogue", gammes },
+    "Veka":     { type: "placeholder" },
+    "Kömmerling":{ type: "placeholder" },
+    "Autre":    { type: "libre" },
+  };
+}
+
 const CATALOGUE = {
+
   fenetre: {
     label: "Fenêtre",
     prefix: "Fen.",
     matieres: {
       "PVC": {
-        profils: {
-          "Profil 70mm": {
-            gammes: ["Confort", "Premium", "Élite"],
-          },
-          "Profil 76mm": {
-            gammes: ["Premium", "Élite", "Prestige"],
-          },
-          "Profil 82mm": {
-            gammes: ["Élite", "Prestige"],
-          }
-        }
+        hasFabricant: true,
+        fabricants: pvcFabricants(ALUPLAST_FENPF),
       },
       "Aluminium": {
-        profils: {
-          "Série 45": {
-            gammes: ["Standard", "Thermique"],
-          },
-          "Série 55": {
-            gammes: ["Thermique", "Haute Performance"],
-          },
-          "Série 68": {
-            gammes: ["Haute Performance", "Architecte"],
-          }
-        }
+        hasFabricant: false,
+        gammes: ["À compléter"],
       },
       "Mixte Bois-Alu": {
-        profils: {
-          "Profil standard": {
-            gammes: ["Classique", "Contemporain"],
-          },
-          "Profil renforcé": {
-            gammes: ["Contemporain", "Prestige"],
-          }
-        }
-      }
+        hasFabricant: false,
+        gammes: ["À compléter"],
+      },
     },
-    ouvertures: ["Fixe", "Oscillo-battant", "Battant 1 vantail", "Battant 2 vantaux", "Coulissant 2 vantaux", "Coulissant 3 vantaux", "Soufflet"],
-    vitrages: ["Double vitrage 4/16/4", "Double vitrage 4/16/4 Argon", "Triple vitrage 4/16/4/16/4", "Triple vitrage Argon", "Feuilleté sécurité"],
+    ouvertures: ["Fixe", "Oscillo-battant", "Battant 1 vantail", "Battant 2 vantaux", "Battant 2 vantaux + imposte", "Soufflet"],
+    vitrages: VIT_STD,
   },
+
   "porte-fenetre": {
     label: "Porte-fenêtre",
     prefix: "PF.",
     matieres: {
       "PVC": {
-        profils: {
-          "Profil 70mm": { gammes: ["Confort", "Premium"] },
-          "Profil 76mm": { gammes: ["Premium", "Élite"] },
-          "Profil 82mm": { gammes: ["Élite", "Prestige"] }
-        }
+        hasFabricant: true,
+        fabricants: pvcFabricants(ALUPLAST_FENPF),
       },
       "Aluminium": {
-        profils: {
-          "Série 55": { gammes: ["Thermique", "Haute Performance"] },
-          "Série 68": { gammes: ["Haute Performance", "Architecte"] }
-        }
+        hasFabricant: false,
+        gammes: ["À compléter"],
       },
       "Mixte Bois-Alu": {
-        profils: {
-          "Profil standard": { gammes: ["Classique", "Contemporain"] },
-          "Profil renforcé": { gammes: ["Contemporain", "Prestige"] }
-        }
-      }
+        hasFabricant: false,
+        gammes: ["À compléter"],
+      },
     },
-    ouvertures: ["Battant 1 vantail", "Battant 2 vantaux", "Battant 2 vantaux + imposte", "Coulissant 2 vantaux", "Coulissant 3 vantaux", "Galandage"],
-    vitrages: ["Double vitrage 4/16/4", "Double vitrage 4/16/4 Argon", "Triple vitrage 4/16/4/16/4", "Feuilleté sécurité"],
+    ouvertures: ["Battant 1 vantail", "Battant 2 vantaux", "Battant 2 vantaux + imposte", "Oscillo-battant 1 vantail", "Oscillo-battant 2 vantaux"],
+    vitrages: VIT_STD,
   },
+
   "porte-entree": {
     label: "Porte d'entrée",
     prefix: "PE.",
     matieres: {
       "PVC": {
-        profils: {
-          "Profil 70mm": { gammes: ["Confort", "Premium"] },
-          "Profil 82mm": { gammes: ["Premium", "Élite"] }
-        }
+        hasFabricant: true,
+        fabricants: pvcFabricants(ALUPLAST_FENPF),
       },
       "Aluminium": {
-        profils: {
-          "Série 55": { gammes: ["Standard", "Thermique"] },
-          "Série 68": { gammes: ["Thermique", "Architecte"] }
-        }
+        hasFabricant: false,
+        gammes: ["À compléter"],
       },
       "Acier": {
-        profils: {
-          "Tôle 1.5mm": { gammes: ["Standard", "Blindée"] },
-          "Tôle 2mm": { gammes: ["Blindée", "Anti-effraction"] }
-        }
-      }
+        hasFabricant: false,
+        gammes: ["Standard", "Blindée", "Anti-effraction"],
+      },
     },
     ouvertures: ["1 vantail", "1 vantail + imposte", "2 vantaux", "2 vantaux + imposte"],
-    vitrages: ["Plein (sans vitrage)", "Vitré haut", "Vitré latéral", "Vitré total", "Ornemental"],
+    vitrages: VIT_PORTE,
   },
-  baie: {
-    label: "Baie vitrée",
-    prefix: "BV.",
+
+  // ── BAIE PSK (oscillo-coulissant / levant-coulissant) ────────────────
+  "baie-psk": {
+    label: "Baie PSK",
+    prefix: "PSK.",
     matieres: {
       "PVC": {
-        profils: {
-          "Profil 76mm": { gammes: ["Confort", "Premium"] },
-          "Profil 82mm": { gammes: ["Élite", "Prestige"] }
-        }
+        hasFabricant: true,
+        fabricants: pvcFabricants(ALUPLAST_FENPF),
       },
       "Aluminium": {
-        profils: {
-          "Série 68": { gammes: ["Haute Performance", "Architecte"] },
-          "Série 77": { gammes: ["Architecte", "Prestige"] }
-        }
-      }
+        hasFabricant: false,
+        gammes: ["À compléter"],
+      },
     },
-    ouvertures: ["Coulissant 2 vantaux", "Coulissant 3 vantaux", "Coulissant 4 vantaux", "Galandage 2 vantaux", "Galandage 4 vantaux", "Levant-coulissant"],
-    vitrages: ["Double vitrage 4/16/4 Argon", "Triple vitrage 4/16/4/16/4", "Feuilleté sécurité", "Contrôle solaire"],
+    ouvertures: ["2 vantaux", "3 vantaux", "4 vantaux", "Galandage 2 vantaux", "Galandage 4 vantaux"],
+    vitrages: VIT_BAIE,
   },
+
+  // ── BAIE COULISSANTE CLASSIQUE (Smart Slide, HST…) ───────────────────
+  "baie-coul": {
+    label: "Baie coulissante",
+    prefix: "BC.",
+    matieres: {
+      "PVC": {
+        hasFabricant: true,
+        fabricants: {
+          "Aluplast": { type: "catalogue", gammes: ALUPLAST_PSK },
+          "Veka":      { type: "placeholder" },
+          "Kömmerling":{ type: "placeholder" },
+          "Autre":     { type: "libre" },
+        },
+      },
+      "Aluminium": {
+        hasFabricant: false,
+        gammes: ["À compléter"],
+      },
+    },
+    ouvertures: ["Coulissant 2 vantaux", "Coulissant 3 vantaux", "Coulissant 4 vantaux"],
+    vitrages: VIT_BAIE,
+  },
+
   garage: {
     label: "Porte de garage",
     prefix: "PG.",
     matieres: {
       "Acier": {
-        profils: {
-          "Tôle nervurée": { gammes: ["Standard", "Thermique"] },
-          "Tôle lisse": { gammes: ["Design", "Premium"] }
-        }
+        hasFabricant: false,
+        gammes: ["Standard", "Thermique", "Design", "Premium"],
       },
       "Aluminium": {
-        profils: {
-          "Profilé standard": { gammes: ["Standard", "Thermique"] },
-          "Profilé renforcé": { gammes: ["Premium", "Architecte"] }
-        }
-      }
+        hasFabricant: false,
+        gammes: ["Standard", "Thermique", "Premium", "Architecte"],
+      },
     },
     ouvertures: ["Sectionnelle plafond", "Sectionnelle débordante", "Basculante", "Coulissante latérale", "Enroulable"],
     vitrages: ["Plein (sans vitrage)", "Hublots", "Lanterneau haut", "Vitré total"],
   },
+
   volet: {
     label: "Volet roulant",
     prefix: "VR.",
     matieres: {
       "PVC": {
-        profils: {
-          "Lame 37mm": { gammes: ["Standard", "Confort"] },
-          "Lame 55mm": { gammes: ["Confort", "Renforcé"] }
-        }
+        hasFabricant: false,
+        gammes: ["Standard lame 37mm", "Confort lame 37mm", "Renforcé lame 55mm"],
       },
       "Aluminium": {
-        profils: {
-          "Lame 37mm": { gammes: ["Standard", "Thermique"] },
-          "Lame 55mm": { gammes: ["Thermique", "Sécurisé"] }
-        }
-      }
+        hasFabricant: false,
+        gammes: ["Standard lame 37mm", "Thermique lame 37mm", "Sécurisé lame 55mm"],
+      },
     },
     ouvertures: ["Manuel sangle", "Manuel treuil", "Électrique filaire", "Électrique radio", "Domotique"],
     vitrages: ["N/A"],
   },
+
   autre: {
     label: "Autre menuiserie",
     prefix: "Aut.",
     matieres: {
-      "PVC": { profils: { "Standard": { gammes: ["Standard"] } } },
-      "Aluminium": { profils: { "Standard": { gammes: ["Standard"] } } },
-      "Bois": { profils: { "Standard": { gammes: ["Standard"] } } }
+      "PVC": { hasFabricant: false, gammes: ["Standard"] },
+      "Aluminium": { hasFabricant: false, gammes: ["Standard"] },
+      "Bois": { hasFabricant: false, gammes: ["Standard"] },
+      "Acier": { hasFabricant: false, gammes: ["Standard"] },
     },
     ouvertures: ["Standard"],
     vitrages: ["Standard"],
-  }
+  },
 };
 
 // ══════════════════════════════════════════════
@@ -413,375 +403,403 @@ function getDevisNum() {
 }
 let devisNum = getDevisNum();
 
-// ══════════════════════════════════════════════
-// COMPTEURS PAR TYPE
-// ══════════════════════════════════════════════
 function getNumeroForType(type) {
   const cat = CATALOGUE[type];
   const prefix = cat ? cat.prefix : "N°";
-  const existing = produits.filter(p => p.type === type);
-  const num = existing.length + 1;
-  return `${prefix}${String(num).padStart(2,'0')}`;
+  const n = produits.filter(p => p.type === type).length + 1;
+  return `${prefix}${String(n).padStart(2,'0')}`;
+}
+
+function fmtEur(n) {
+  return (n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
 }
 
 // ══════════════════════════════════════════════
-// AJOUTER PRODUIT
+// AJOUTER / SUPPRIMER
 // ══════════════════════════════════════════════
 function ajouterProduit(type) {
   const id = nextId++;
-  const numero = getNumeroForType(type);
-  const cat = CATALOGUE[type] || CATALOGUE['autre'];
-  const produit = {
-    id, type, numero,
-    matiere: '', profil: '', gamme: '', ouverture: '', vitrage: '',
-    largeur: '', hauteur: '',
-    designation: '',
-    quantite: 1, prixUnitaire: 0,
-    withPose: false,
-    prixPose: 0,
-    open: true
-  };
-  produits.push(produit);
-  renderProduits();
-  updatePreview();
-}
-
-// ══════════════════════════════════════════════
-// SUPPRIMER PRODUIT
-// ══════════════════════════════════════════════
-function supprimerProduit(id) {
-  produits = produits.filter(p => p.id !== id);
-  // Re-numéroter
-  const counts = {};
-  produits.forEach(p => {
-    if (!counts[p.type]) counts[p.type] = 0;
-    counts[p.type]++;
-    const cat = CATALOGUE[p.type];
-    const prefix = cat ? cat.prefix : "N°";
-    p.numero = `${prefix}${String(counts[p.type]).padStart(2,'0')}`;
+  produits.push({
+    id, type,
+    numero: getNumeroForType(type),
+    matiere:'', fabricant:'', gamme:'', ouverture:'', vitrage:'',
+    gammeLibre:'', fabricantLibre:'',
+    autreDesig:'', autreMatiere:'', autreCouleur:'', autreDim:'', autreRef:'',
+    largeur:'', hauteur:'',
+    designation:'',
+    quantite:1, prixUnitaire:0,
+    withPose:false, prixPose:0,
+    open:true
   });
   renderProduits();
   updatePreview();
 }
 
-// ══════════════════════════════════════════════
-// TOGGLE CARD
-// ══════════════════════════════════════════════
+function supprimerProduit(id) {
+  produits = produits.filter(p => p.id !== id);
+  const counts = {};
+  produits.forEach(p => {
+    counts[p.type] = (counts[p.type]||0) + 1;
+    const cat = CATALOGUE[p.type];
+    p.numero = `${cat?cat.prefix:'N°'}${String(counts[p.type]).padStart(2,'0')}`;
+  });
+  renderProduits();
+  updatePreview();
+}
+
 function toggleCard(id) {
-  const p = produits.find(x => x.id === id);
-  if (p) p.open = !p.open;
+  const p = produits.find(x=>x.id===id);
+  if(p) p.open = !p.open;
   renderProduits();
 }
 
 // ══════════════════════════════════════════════
-// MISE À JOUR CONFIGURATEUR
+// HANDLERS CASCADE
 // ══════════════════════════════════════════════
 function onMatiereChange(id) {
-  const p = produits.find(x => x.id === id);
+  const p = produits.find(x=>x.id===id);
   p.matiere = document.getElementById(`mat-${id}`).value;
-  p.profil = '';
-  p.gamme = '';
-  p.ouverture = '';
-  p.vitrage = '';
+  p.fabricant=''; p.gamme=''; p.ouverture=''; p.vitrage='';
+  p.gammeLibre=''; p.fabricantLibre='';
+  refreshCascade(id);
   updateDesignation(id);
-  renderProfilSelect(id);
-  renderGammeSelect(id);
-  renderOuvertureSelect(id);
-  renderVitrageSelect(id);
 }
 
-function onProfilChange(id) {
-  const p = produits.find(x => x.id === id);
-  p.profil = document.getElementById(`prof-${id}`).value;
-  p.gamme = '';
+function onFabricantChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.fabricant = document.getElementById(`fab-${id}`).value;
+  p.gamme=''; p.gammeLibre='';
+  refreshGamme(id);
   updateDesignation(id);
-  renderGammeSelect(id);
 }
 
 function onGammeChange(id) {
-  const p = produits.find(x => x.id === id);
-  p.gamme = document.getElementById(`gam-${id}`).value;
+  const p = produits.find(x=>x.id===id);
+  const sel = document.getElementById(`gam-${id}`);
+  if(sel) p.gamme = sel.value;
   updateDesignation(id);
 }
 
+function onGammeLibreChange(id) {
+  const p = produits.find(x=>x.id===id);
+  const el = document.getElementById(`gam-libre-${id}`);
+  if(el) p.gammeLibre = el.value;
+  updateDesignation(id);
+}
+
+function onFabricantLibreChange(id) {
+  const p = produits.find(x=>x.id===id);
+  const el = document.getElementById(`fab-libre-${id}`);
+  if(el) p.fabricantLibre = el.value;
+  updateDesignation(id);
+}
+
+function onAutreDesigChange(id) {
+  const p=produits.find(x=>x.id===id);
+  const el=document.getElementById(`autre-desig-${id}`); if(el) p.autreDesig=el.value;
+  buildAutreDesignation(id);
+}
+function onAutreFieldChange(id) {
+  const p=produits.find(x=>x.id===id);
+  const mat=document.getElementById(`autre-mat-${id}`); if(mat) p.autreMatiere=mat.value;
+  const coul=document.getElementById(`autre-coul-${id}`); if(coul) p.autreCouleur=coul.value;
+  const dim=document.getElementById(`autre-dim-${id}`); if(dim) p.autreDim=dim.value;
+  const ref=document.getElementById(`autre-ref-${id}`); if(ref) p.autreRef=ref.value;
+  buildAutreDesignation(id);
+}
+function buildAutreDesignation(id) {
+  const p=produits.find(x=>x.id===id);
+  const parts=[];
+  if(p.autreDesig) parts.push(p.autreDesig);
+  if(p.autreMatiere) parts.push(p.autreMatiere);
+  if(p.autreCouleur) parts.push(p.autreCouleur);
+  if(p.autreDim) parts.push(p.autreDim+'mm');
+  if(p.autreRef) parts.push(p.autreRef);
+  p.designation = parts.join(' — ');
+  const box=document.getElementById(`desig-${id}`);
+  if(box){
+    if(p.designation){box.textContent=p.designation;box.className='designation-box';}
+    else{box.textContent='La désignation apparaîtra ici au fur et à mesure de votre saisie…';box.className='designation-box empty';}
+  }
+  const sub=document.querySelector(`#card-${id} .card-subtitle`);
+  if(sub) sub.textContent=p.designation||'Saisie en cours…';
+  updatePreview();
+}
+
 function onOuvertureChange(id) {
-  const p = produits.find(x => x.id === id);
+  const p = produits.find(x=>x.id===id);
   p.ouverture = document.getElementById(`ouv-${id}`).value;
   updateDesignation(id);
   renderSVG(id);
 }
 
 function onVitrageChange(id) {
-  const p = produits.find(x => x.id === id);
+  const p = produits.find(x=>x.id===id);
   p.vitrage = document.getElementById(`vit-${id}`).value;
   updateDesignation(id);
 }
 
-function renderProfilSelect(id) {
-  const p = produits.find(x => x.id === id);
-  const cat = CATALOGUE[p.type];
-  const sel = document.getElementById(`prof-${id}`);
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Choisir un profilé —</option>';
-  if (p.matiere && cat.matieres[p.matiere]) {
-    Object.keys(cat.matieres[p.matiere].profils).forEach(pr => {
-      sel.innerHTML += `<option value="${pr}">${pr}</option>`;
-    });
-    sel.disabled = false;
-  } else {
-    sel.disabled = true;
-  }
-}
-
-function renderGammeSelect(id) {
-  const p = produits.find(x => x.id === id);
-  const cat = CATALOGUE[p.type];
-  const sel = document.getElementById(`gam-${id}`);
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Choisir une gamme —</option>';
-  if (p.matiere && p.profil && cat.matieres[p.matiere] && cat.matieres[p.matiere].profils[p.profil]) {
-    cat.matieres[p.matiere].profils[p.profil].gammes.forEach(g => {
-      sel.innerHTML += `<option value="${g}">${g}</option>`;
-    });
-    sel.disabled = false;
-  } else {
-    sel.disabled = true;
-  }
-}
-
-function renderOuvertureSelect(id) {
-  const p = produits.find(x => x.id === id);
-  const cat = CATALOGUE[p.type];
-  const sel = document.getElementById(`ouv-${id}`);
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Type d\'ouverture —</option>';
-  cat.ouvertures.forEach(o => {
-    sel.innerHTML += `<option value="${o}">${o}</option>`;
-  });
-  if (p.matiere) sel.disabled = false;
-  else sel.disabled = true;
-}
-
-function renderVitrageSelect(id) {
-  const p = produits.find(x => x.id === id);
-  const cat = CATALOGUE[p.type];
-  const sel = document.getElementById(`vit-${id}`);
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Type de vitrage —</option>';
-  if (p.type === 'volet') {
-    sel.innerHTML = '<option value="N/A">N/A (volet roulant)</option>';
-    sel.disabled = true;
-    return;
-  }
-  cat.vitrages.forEach(v => {
-    sel.innerHTML += `<option value="${v}">${v}</option>`;
-  });
-  if (p.matiere) sel.disabled = false;
-  else sel.disabled = true;
-}
-
-// ══════════════════════════════════════════════
-// GÉNÉRATION DÉSIGNATION AUTOMATIQUE
-// ══════════════════════════════════════════════
-function updateDesignation(id) {
-  const p = produits.find(x => x.id === id);
-  const cat = CATALOGUE[p.type];
-  const parts = [];
-  if (p.matiere) parts.push(p.matiere);
-  if (p.profil) parts.push(p.profil);
-  if (p.gamme) parts.push(`Gamme ${p.gamme}`);
-  if (p.ouverture) parts.push(p.ouverture);
-  if (p.largeur && p.hauteur) parts.push(`${p.largeur}x${p.hauteur}mm`);
-  if (p.vitrage && p.vitrage !== 'N/A') parts.push(p.vitrage);
-
-  if (parts.length > 0) {
-    p.designation = `${cat.label} ${parts.join(' — ')}`;
-  } else {
-    p.designation = '';
-  }
-
-  const box = document.getElementById(`desig-${id}`);
-  if (box) {
-    if (p.designation) {
-      box.textContent = p.designation;
-      box.className = 'designation-box';
-    } else {
-      box.textContent = 'La désignation apparaîtra ici au fur et à mesure de votre sélection…';
-      box.className = 'designation-box empty';
-    }
-  }
-  updatePreview();
-}
-
-// ══════════════════════════════════════════════
-// DIMENSIONS & PRIX
-// ══════════════════════════════════════════════
 function onDimChange(id) {
-  const p = produits.find(x => x.id === id);
+  const p = produits.find(x=>x.id===id);
   const l = document.getElementById(`larg-${id}`);
   const h = document.getElementById(`haut-${id}`);
-  if (l) p.largeur = l.value;
-  if (h) p.hauteur = h.value;
+  if(l) p.largeur = l.value;
+  if(h) p.hauteur = h.value;
   updateDesignation(id);
   renderSVG(id);
 }
 
-function onQtyChange(id) {
-  const p = produits.find(x => x.id === id);
-  const el = document.getElementById(`qty-${id}`);
-  if (el) p.quantite = parseFloat(el.value) || 1;
-  updateCardTotal(id);
-  updatePreview();
-}
-
-function onPrixChange(id) {
-  const p = produits.find(x => x.id === id);
-  const el = document.getElementById(`prix-${id}`);
-  if (el) p.prixUnitaire = parseFloat(el.value) || 0;
-  updateCardTotal(id);
-  updatePreview();
-}
-
-function onPoseToggle(id) {
-  const p = produits.find(x => x.id === id);
-  const cb = document.getElementById(`pose-cb-${id}`);
-  if (cb) p.withPose = cb.checked;
-  const poseRow = document.getElementById(`pose-row-${id}`);
-  if (poseRow) poseRow.style.display = p.withPose ? 'grid' : 'none';
-  updateCardTotal(id);
-  updatePreview();
-}
-
-function onPrixPoseChange(id) {
-  const p = produits.find(x => x.id === id);
-  const el = document.getElementById(`prixpose-${id}`);
-  if (el) p.prixPose = parseFloat(el.value) || 0;
-  updateCardTotal(id);
-  updatePreview();
-}
-
-function getPrixTotal(p) {
-  const fournitures = (p.prixUnitaire || 0) * (p.quantite || 1);
-  const pose = p.withPose ? (p.prixPose || 0) * (p.quantite || 1) : 0;
-  return fournitures + pose;
-}
-
-function updateCardTotal(id) {
-  const p = produits.find(x => x.id === id);
-  const el = document.getElementById(`card-total-${id}`);
-  if (el) el.textContent = fmtEur(getPrixTotal(p));
-}
-
 // ══════════════════════════════════════════════
-// SVG DESSIN MENUISERIE
+// REFRESH SÉLECTS EN CASCADE (sans re-render complet)
 // ══════════════════════════════════════════════
-function renderSVG(id) {
-  const p = produits.find(x => x.id === id);
-  const container = document.getElementById(`svg-container-${id}`);
-  if (!container) return;
-  container.innerHTML = genSVG(p, 120, 140);
-}
+function refreshCascade(id) {
+  const p = produits.find(x=>x.id===id);
+  const cat = CATALOGUE[p.type];
+  const mat = cat.matieres[p.matiere];
 
-function genSVG(p, W, H) {
-  if (!p.largeur || !p.hauteur) return '<svg width="'+W+'" height="'+H+'"><rect x="5" y="5" width="'+(W-10)+'" height="'+(H-10)+'" fill="none" stroke="#ccc" stroke-width="1" stroke-dasharray="4"/><text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" fill="#aaa" font-size="9">Entrez les dimensions</text></svg>';
-
-  const type = p.type;
-  const ouv = p.ouverture || '';
-  const stroke = '#0d1b2a';
-  const frameFill = '#e8e4dc';
-  const glassFill = 'rgba(180,220,240,0.4)';
-  const arrowColor = '#c8782a';
-
-  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  // Étiquette dimensions
-  svg += `<text x="${W/2}" y="${H-3}" text-anchor="middle" fill="#888" font-size="7">${p.largeur}×${p.hauteur}mm</text>`;
-
-  const x=8, y=8, w=W-16, h=H-20;
-
-  if (type === 'volet') {
-    // Volet roulant - lames horizontales
-    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${frameFill}" stroke="${stroke}" stroke-width="2"/>`;
-    for (let i=0; i<8; i++) {
-      const ly = y + (h/8)*i + h/16;
-      svg += `<line x1="${x+4}" y1="${ly}" x2="${x+w-4}" y2="${ly}" stroke="${stroke}" stroke-width="1" opacity="0.4"/>`;
+  // Fabricant
+  const fabWrap = document.getElementById(`fab-wrap-${id}`);
+  const fabLibreWrap = document.getElementById(`fab-libre-wrap-${id}`);
+  if(!mat || !mat.hasFabricant) {
+    if(fabWrap) fabWrap.style.display='none';
+    if(fabLibreWrap) fabLibreWrap.style.display='none';
+  } else {
+    if(fabWrap) fabWrap.style.display='block';
+    const sel = document.getElementById(`fab-${id}`);
+    if(sel) {
+      sel.innerHTML = '<option value="">— Choisir le fabricant —</option>';
+      Object.keys(mat.fabricants).forEach(f => {
+        sel.innerHTML += `<option value="${f}">${f}${mat.fabricants[f].type==='placeholder'?' (à compléter)':''}</option>`;
+      });
+      sel.disabled = false;
     }
-    svg += `<rect x="${x}" y="${y}" width="${w}" height="10" fill="${stroke}" opacity="0.7"/>`;
-  } else if (type === 'garage') {
-    // Porte de garage - panneaux
-    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${frameFill}" stroke="${stroke}" stroke-width="2"/>`;
-    const nPanneaux = 4;
-    for (let i=0; i<nPanneaux; i++) {
-      const py = y + (h/nPanneaux)*i + 2;
-      svg += `<rect x="${x+4}" y="${py}" width="${w-8}" height="${h/nPanneaux-4}" fill="white" stroke="${stroke}" stroke-width="0.5" rx="2"/>`;
+    if(fabLibreWrap) fabLibreWrap.style.display='none';
+  }
+
+  // Gamme
+  refreshGamme(id);
+
+  // Ouverture
+  const ouvSel = document.getElementById(`ouv-${id}`);
+  if(ouvSel) ouvSel.disabled = !p.matiere;
+
+  // Vitrage
+  const vitSel = document.getElementById(`vit-${id}`);
+  if(vitSel) vitSel.disabled = !p.matiere;
+}
+
+function refreshGamme(id) {
+  const p = produits.find(x=>x.id===id);
+  const cat = CATALOGUE[p.type];
+  const mat = cat.matieres[p.matiere];
+  const gamWrap = document.getElementById(`gam-wrap-${id}`);
+  const gamLibreWrap = document.getElementById(`gam-libre-wrap-${id}`);
+  const fabLibreWrap = document.getElementById(`fab-libre-wrap-${id}`);
+
+  if(!mat) {
+    if(gamWrap) { gamWrap.style.display='block'; const s=document.getElementById(`gam-${id}`); if(s){s.innerHTML='<option value="">—</option>';s.disabled=true;} }
+    if(gamLibreWrap) gamLibreWrap.style.display='none';
+    if(fabLibreWrap) fabLibreWrap.style.display='none';
+    return;
+  }
+
+  if(mat.hasFabricant) {
+    const fab = mat.fabricants[p.fabricant];
+    if(!fab) {
+      if(gamWrap) { gamWrap.style.display='block'; const s=document.getElementById(`gam-${id}`); if(s){s.innerHTML='<option value="">— Choisir le fabricant d\'abord —</option>';s.disabled=true;} }
+      if(gamLibreWrap) gamLibreWrap.style.display='none';
+      if(fabLibreWrap) fabLibreWrap.style.display='none';
+    } else if(fab.type === 'placeholder') {
+      // Veka / Kömm : à compléter → saisie libre gamme
+      if(gamWrap) gamWrap.style.display='none';
+      if(gamLibreWrap) gamLibreWrap.style.display='block';
+      if(fabLibreWrap) fabLibreWrap.style.display='none';
+    } else if(fab.type === 'libre') {
+      // Autre : saisie libre fabricant + gamme
+      if(gamWrap) gamWrap.style.display='none';
+      if(gamLibreWrap) gamLibreWrap.style.display='block';
+      if(fabLibreWrap) fabLibreWrap.style.display='block';
+    } else {
+      // Catalogue Aluplast
+      if(gamWrap) gamWrap.style.display='block';
+      if(gamLibreWrap) gamLibreWrap.style.display='none';
+      if(fabLibreWrap) fabLibreWrap.style.display='none';
+      const sel = document.getElementById(`gam-${id}`);
+      if(sel) {
+        sel.innerHTML = '<option value="">— Choisir la gamme —</option>';
+        fab.gammes.forEach(g => {
+          const label = typeof g === 'object' ? `${g.gamme}${g.epaisseur?' ('+g.epaisseur+')':''}` : g;
+          const val   = typeof g === 'object' ? g.gamme : g;
+          sel.innerHTML += `<option value="${val}" ${p.gamme===val?'selected':''}>${label}</option>`;
+        });
+        sel.disabled = false;
+      }
     }
   } else {
-    // CADRE PRINCIPAL
-    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${frameFill}" stroke="${stroke}" stroke-width="3"/>`;
+    // Pas de fabricant (Alu, Acier, Volet...)
+    if(gamWrap) gamWrap.style.display='block';
+    if(gamLibreWrap) gamLibreWrap.style.display='none';
+    if(fabLibreWrap) fabLibreWrap.style.display='none';
+    const sel = document.getElementById(`gam-${id}`);
+    if(sel) {
+      sel.innerHTML = '<option value="">— Choisir la gamme —</option>';
+      mat.gammes.forEach(g => {
+        sel.innerHTML += `<option value="${g}" ${p.gamme===g?'selected':''}>${g}</option>`;
+      });
+      sel.disabled = !p.matiere;
+    }
+  }
+}
 
-    const is2V = ouv.includes('2 vantaux') || ouv.includes('2 vantaux');
-    const is3V = ouv.includes('3 vantaux');
-    const isCoul = ouv.toLowerCase().includes('coulissant') || ouv.toLowerCase().includes('galandage');
-    const isFixed = ouv === 'Fixe';
-
-    if (is3V) {
-      // 3 vantaux
-      const vw = (w-6)/3;
-      for (let i=0; i<3; i++) {
-        const vx = x+3+i*(vw+1.5);
-        svg += `<rect x="${vx}" y="${y+3}" width="${vw}" height="${h-6}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
-        if (!isFixed && i!==1) {
-          const cx = vx+vw/2;
-          const cy = y+h/2;
-          const dir = (i===0 && !isCoul) ? -1 : 1;
-          svg += `<line x1="${cx}" y1="${cy-8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrowColor}" stroke-width="1.5"/>`;
-          svg += `<line x1="${cx}" y1="${cy+8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrowColor}" stroke-width="1.5"/>`;
-        }
-      }
-    } else if (is2V || ouv === 'Battant 2 vantaux' || ouv === 'Battant 2 vantaux + imposte') {
-      const vw = (w-7)/2;
-      const hasImposte = ouv.includes('imposte');
-      const ih = hasImposte ? h*0.25 : 0;
-      const vh = h - 6 - ih;
-      if (hasImposte) {
-        svg += `<rect x="${x+3}" y="${y+3}" width="${w-6}" height="${ih}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
-      }
-      for (let i=0; i<2; i++) {
-        const vx = x+3+i*(vw+1);
-        const vy = y+3+ih;
-        svg += `<rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
-        if (!isCoul) {
-          const cx = vx+vw/2;
-          const cy = vy+vh/2;
-          const dir = i===0 ? -1 : 1;
-          svg += `<line x1="${cx}" y1="${cy-8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrowColor}" stroke-width="1.5"/>`;
-          svg += `<line x1="${cx}" y1="${cy+8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrowColor}" stroke-width="1.5"/>`;
-        }
-      }
-    } else {
-      // 1 vantail
-      const hasImposte = ouv && ouv.includes('imposte');
-      const ih = hasImposte ? h*0.25 : 0;
-      const vh = h - 6 - ih;
-      if (hasImposte) {
-        svg += `<rect x="${x+3}" y="${y+3}" width="${w-6}" height="${ih}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
-      }
-      svg += `<rect x="${x+3}" y="${y+3+ih}" width="${w-6}" height="${vh}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
-      if (!isFixed && !isCoul) {
-        const cx = x+3+(w-6)/2;
-        const cy = y+3+ih+vh/2;
-        svg += `<line x1="${cx}" y1="${cy-10}" x2="${cx+12}" y2="${cy}" stroke="${arrowColor}" stroke-width="1.5"/>`;
-        svg += `<line x1="${cx}" y1="${cy+10}" x2="${cx+12}" y2="${cy}" stroke="${arrowColor}" stroke-width="1.5"/>`;
-      }
-      if (isCoul && !isFixed) {
-        const cx = x+3+(w-6)/2;
-        const cy = y+3+ih+vh/2;
-        svg += `<line x1="${cx-12}" y1="${cy}" x2="${cx+12}" y2="${cy}" stroke="${arrowColor}" stroke-width="1.5" marker-end="url(#arr)"/>`;
+// ══════════════════════════════════════════════
+// DÉSIGNATION AUTO
+// ══════════════════════════════════════════════
+function updateDesignation(id) {
+  const p = produits.find(x=>x.id===id);
+  const cat = CATALOGUE[p.type];
+  const parts = [];
+  if(p.matiere) parts.push(p.matiere);
+  // Fabricant
+  if(p.fabricant) {
+    const mat = cat.matieres[p.matiere];
+    if(mat && mat.hasFabricant) {
+      const fab = mat.fabricants[p.fabricant];
+      if(fab && fab.type==='libre') {
+        if(p.fabricantLibre) parts.push(p.fabricantLibre);
+        else parts.push(p.fabricant);
+      } else {
+        parts.push(p.fabricant);
       }
     }
   }
+  // Gamme
+  if(p.gamme) {
+    // Trouver l'épaisseur si Aluplast
+    let epaisseur = '';
+    const mat = cat.matieres[p.matiere];
+    if(mat && mat.hasFabricant && mat.fabricants[p.fabricant] && mat.fabricants[p.fabricant].gammes) {
+      const gObj = mat.fabricants[p.fabricant].gammes.find(g => (typeof g==='object' ? g.gamme : g) === p.gamme);
+      if(gObj && typeof gObj === 'object' && gObj.epaisseur) epaisseur = ` (${gObj.epaisseur})`;
+    }
+    parts.push(p.gamme + epaisseur);
+  } else if(p.gammeLibre) {
+    parts.push(p.gammeLibre);
+  }
+  if(p.ouverture) parts.push(p.ouverture);
+  if(p.largeur && p.hauteur) parts.push(`${p.largeur}×${p.hauteur}mm`);
+  if(p.vitrage && p.vitrage !== 'N/A') parts.push(p.vitrage);
 
-  svg += '</svg>';
+  p.designation = parts.length > 0 ? `${cat.label} ${parts.join(' — ')}` : '';
+
+  const box = document.getElementById(`desig-${id}`);
+  if(box) {
+    if(p.designation) { box.textContent = p.designation; box.className='designation-box'; }
+    else { box.textContent='La désignation apparaîtra ici au fur et à mesure de votre sélection…'; box.className='designation-box empty'; }
+  }
+  // Update card subtitle
+  const sub = document.querySelector(`#card-${id} .card-subtitle`);
+  if(sub) sub.textContent = p.designation || 'Configuration en cours…';
+  updatePreview();
+}
+
+// ══════════════════════════════════════════════
+// SVG DESSIN
+// ══════════════════════════════════════════════
+function renderSVG(id) {
+  const p = produits.find(x=>x.id===id);
+  const c = document.getElementById(`svg-container-${id}`);
+  if(c) c.innerHTML = genSVG(p, 120, 140);
+}
+
+function genSVG(p, W, H) {
+  const stroke='#0d1b2a', frameFill='#e8e4dc', glassFill='rgba(180,220,240,0.4)', arrow='#c8782a';
+  if(!p.largeur||!p.hauteur) return `<svg width="${W}" height="${H}"><rect x="5" y="5" width="${W-10}" height="${H-10}" fill="none" stroke="#ccc" stroke-width="1" stroke-dasharray="4"/><text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#aaa" font-size="9">Entrez les dimensions</text></svg>`;
+  const x=8,y=8,w=W-16,h=H-20;
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  svg+=`<text x="${W/2}" y="${H-3}" text-anchor="middle" fill="#888" font-size="7">${p.largeur}×${p.hauteur}mm</text>`;
+  const ouv=p.ouverture||'';
+  if(p.type==='volet'){
+    svg+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${frameFill}" stroke="${stroke}" stroke-width="2"/>`;
+    for(let i=0;i<8;i++) svg+=`<line x1="${x+4}" y1="${y+(h/8)*i+h/16}" x2="${x+w-4}" y2="${y+(h/8)*i+h/16}" stroke="${stroke}" stroke-width="1" opacity="0.4"/>`;
+    svg+=`<rect x="${x}" y="${y}" width="${w}" height="10" fill="${stroke}" opacity="0.7"/>`;
+  } else if(p.type==='garage'){
+    svg+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${frameFill}" stroke="${stroke}" stroke-width="2"/>`;
+    for(let i=0;i<4;i++) svg+=`<rect x="${x+4}" y="${y+(h/4)*i+2}" width="${w-8}" height="${h/4-4}" fill="white" stroke="${stroke}" stroke-width="0.5" rx="2"/>`;
+  } else {
+    svg+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${frameFill}" stroke="${stroke}" stroke-width="3"/>`;
+    const n3=ouv.includes('3 vantaux')||ouv.includes('3 vantaux');
+    const n2=ouv.includes('2 vantaux')||ouv.includes('2 vantaux');
+    const isCoul=ouv.toLowerCase().includes('coulissant')||ouv.toLowerCase().includes('galandage')||['baie-psk','baie-coul'].includes(p.type);
+    const isFixed=ouv==='Fixe';
+    const hasImposte=ouv.includes('imposte');
+    const ih=hasImposte?h*0.22:0;
+    if(hasImposte) svg+=`<rect x="${x+3}" y="${y+3}" width="${w-6}" height="${ih}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
+    if(n3){
+      const vw=(w-7)/3;
+      for(let i=0;i<3;i++){
+        const vx=x+3+i*(vw+1.5), vy=y+3+ih, vh=h-6-ih;
+        svg+=`<rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
+        if(!isFixed){const cx=vx+vw/2,cy=vy+vh/2,dir=(i===0&&!isCoul)?-1:1;svg+=`<line x1="${cx}" y1="${cy-8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrow}" stroke-width="1.5"/><line x1="${cx}" y1="${cy+8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrow}" stroke-width="1.5"/>`;}
+      }
+    } else if(n2){
+      const vw=(w-7)/2, vh=h-6-ih;
+      for(let i=0;i<2;i++){
+        const vx=x+3+i*(vw+1), vy=y+3+ih;
+        svg+=`<rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
+        if(!isCoul){const cx=vx+vw/2,cy=vy+vh/2,dir=i===0?-1:1;svg+=`<line x1="${cx}" y1="${cy-8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrow}" stroke-width="1.5"/><line x1="${cx}" y1="${cy+8}" x2="${cx+dir*10}" y2="${cy}" stroke="${arrow}" stroke-width="1.5"/>`;}
+        else{svg+=`<line x1="${vx+4}" y1="${vy+vh/2}" x2="${vx+vw-4}" y2="${vy+vh/2}" stroke="${arrow}" stroke-width="1.2"/>`;}
+      }
+    } else {
+      const vh=h-6-ih;
+      svg+=`<rect x="${x+3}" y="${y+3+ih}" width="${w-6}" height="${vh}" fill="${glassFill}" stroke="${stroke}" stroke-width="1.5"/>`;
+      if(!isFixed&&!isCoul){const cx=x+3+(w-6)/2,cy=y+3+ih+vh/2;svg+=`<line x1="${cx}" y1="${cy-10}" x2="${cx+12}" y2="${cy}" stroke="${arrow}" stroke-width="1.5"/><line x1="${cx}" y1="${cy+10}" x2="${cx+12}" y2="${cy}" stroke="${arrow}" stroke-width="1.5"/>`;}
+    }
+  }
+  svg+='</svg>';
   return svg;
+}
+
+// ══════════════════════════════════════════════
+// PRIX
+// ══════════════════════════════════════════════
+function getPrixTotal(p) {
+  return ((p.prixUnitaire||0) + (p.withPose ? (p.prixPose||0) : 0)) * (p.quantite||1);
+}
+
+function onQtyChange(id) {
+  const p=produits.find(x=>x.id===id);
+  const el=document.getElementById(`qty-${id}`); if(el) p.quantite=parseFloat(el.value)||1;
+  updateCardTotal(id); updatePreview();
+}
+function onPrixChange(id) {
+  const p=produits.find(x=>x.id===id);
+  const el=document.getElementById(`prix-${id}`); if(el) p.prixUnitaire=parseFloat(el.value)||0;
+  updateCardTotal(id); updatePreview();
+}
+function onPoseToggle(id) {
+  const p=produits.find(x=>x.id===id);
+  const cb=document.getElementById(`pose-cb-${id}`); if(cb) p.withPose=cb.checked;
+  const row=document.getElementById(`pose-row-${id}`); if(row) row.style.display=p.withPose?'grid':'none';
+  updateCardTotal(id); updatePreview();
+}
+function onPrixPoseChange(id) {
+  const p=produits.find(x=>x.id===id);
+  const el=document.getElementById(`prixpose-${id}`); if(el) p.prixPose=parseFloat(el.value)||0;
+  updateCardTotal(id); updatePreview();
+}
+function updateCardTotal(id) {
+  const p=produits.find(x=>x.id===id);
+  ['card-total-','card-total2-'].forEach(pre=>{ const el=document.getElementById(pre+id); if(el) el.textContent=fmtEur(getPrixTotal(p)); });
+}
+
+// ══════════════════════════════════════════════
+// SWITCH TABS
+// ══════════════════════════════════════════════
+function switchTab(id,tab,el){
+  ['config','dessin','prix'].forEach(t=>{ const e=document.getElementById(`tab-${t}-${id}`); if(e) e.style.display=t===tab?'block':'none'; });
+  el.parentElement.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(tab==='dessin') renderSVG(id);
 }
 
 // ══════════════════════════════════════════════
@@ -789,71 +807,82 @@ function genSVG(p, W, H) {
 // ══════════════════════════════════════════════
 function renderProduits() {
   const container = document.getElementById('produits-container');
-  if (!container) return;
+  if(!container) return;
   container.innerHTML = '';
 
   produits.forEach(p => {
     const cat = CATALOGUE[p.type] || CATALOGUE['autre'];
     const total = getPrixTotal(p);
 
-    // Construire les options pour les selects
-    const matiereOptions = Object.keys(cat.matieres).map(m =>
+    // Matière options
+    const matOpts = Object.keys(cat.matieres).map(m =>
       `<option value="${m}" ${p.matiere===m?'selected':''}>${m}</option>`
     ).join('');
 
-    let profilOptions = '<option value="">— Choisir un profilé —</option>';
-    let profilDisabled = 'disabled';
-    if (p.matiere && cat.matieres[p.matiere]) {
-      profilDisabled = '';
-      profilOptions = '<option value="">— Choisir un profilé —</option>';
-      Object.keys(cat.matieres[p.matiere].profils).forEach(pr => {
-        profilOptions += `<option value="${pr}" ${p.profil===pr?'selected':''}>${pr}</option>`;
+    // Fabricant options (initial)
+    const mat = cat.matieres[p.matiere];
+    let fabHide = (!mat || !mat.hasFabricant) ? 'display:none' : '';
+    let fabOpts = '<option value="">— Choisir le fabricant —</option>';
+    if(mat && mat.hasFabricant) {
+      Object.keys(mat.fabricants).forEach(f => {
+        fabOpts += `<option value="${f}" ${p.fabricant===f?'selected':''}>${f}${mat.fabricants[f].type==='placeholder'?' (à compléter)':''}</option>`;
       });
     }
 
-    let gammeOptions = '<option value="">— Choisir une gamme —</option>';
-    let gammeDisabled = 'disabled';
-    if (p.matiere && p.profil && cat.matieres[p.matiere] && cat.matieres[p.matiere].profils[p.profil]) {
-      gammeDisabled = '';
-      gammeOptions = '<option value="">— Choisir une gamme —</option>';
-      cat.matieres[p.matiere].profils[p.profil].gammes.forEach(g => {
-        gammeOptions += `<option value="${g}" ${p.gamme===g?'selected':''}>${g}</option>`;
-      });
+    // Gamme select (initial)
+    let gamHide = '', gamLibreHide = 'display:none', fabLibreHide = 'display:none';
+    let gamOpts = '<option value="">— Choisir la gamme —</option>';
+    let gamDis = 'disabled';
+    if(mat) {
+      if(mat.hasFabricant) {
+        const fab = mat.fabricants[p.fabricant];
+        if(!fab) { gamDis='disabled'; }
+        else if(fab.type==='placeholder') { gamHide='display:none'; gamLibreHide=''; }
+        else if(fab.type==='libre') { gamHide='display:none'; gamLibreHide=''; fabLibreHide=''; }
+        else {
+          gamDis='';
+          fab.gammes.forEach(g => {
+            const label = typeof g==='object' ? `${g.gamme}${g.epaisseur?' ('+g.epaisseur+')':''}` : g;
+            const val   = typeof g==='object' ? g.gamme : g;
+            gamOpts += `<option value="${val}" ${p.gamme===val?'selected':''}>${label}</option>`;
+          });
+        }
+      } else {
+        gamDis = p.matiere ? '' : 'disabled';
+        mat.gammes && mat.gammes.forEach(g => {
+          gamOpts += `<option value="${g}" ${p.gamme===g?'selected':''}>${g}</option>`;
+        });
+      }
     }
 
-    let ouvOptions = '<option value="">— Type d\'ouverture —</option>';
-    let ouvDisabled = p.matiere ? '' : 'disabled';
-    cat.ouvertures.forEach(o => {
-      ouvOptions += `<option value="${o}" ${p.ouverture===o?'selected':''}>${o}</option>`;
-    });
+    // Ouverture options
+    let ouvOpts = '<option value="">— Type d\'ouverture —</option>';
+    cat.ouvertures.forEach(o => ouvOpts += `<option value="${o}" ${p.ouverture===o?'selected':''}>${o}</option>`);
+    const ouvDis = p.matiere ? '' : 'disabled';
 
-    let vitOptions = '';
-    let vitDisabled = '';
-    if (p.type === 'volet') {
-      vitOptions = '<option value="N/A">N/A (volet roulant)</option>';
-      vitDisabled = 'disabled';
-    } else {
-      vitOptions = '<option value="">— Type de vitrage —</option>';
-      vitDisabled = p.matiere ? '' : 'disabled';
-      cat.vitrages.forEach(v => {
-        vitOptions += `<option value="${v}" ${p.vitrage===v?'selected':''}>${v}</option>`;
-      });
+    // Vitrage options
+    let vitOpts='', vitDis='';
+    if(p.type==='volet') { vitOpts='<option value="N/A">N/A</option>'; vitDis='disabled'; }
+    else {
+      vitOpts='<option value="">— Type de vitrage —</option>';
+      vitDis = p.matiere ? '' : 'disabled';
+      cat.vitrages.forEach(v => vitOpts += `<option value="${v}" ${p.vitrage===v?'selected':''}>${v}</option>`);
     }
 
-    const desigContent = p.designation
-      ? p.designation
-      : 'La désignation apparaîtra ici au fur et à mesure de votre sélection…';
+    const desigContent = p.designation || 'La désignation apparaîtra ici au fur et à mesure de votre sélection…';
     const desigClass = p.designation ? 'designation-box' : 'designation-box empty';
-
     const svgHtml = genSVG(p, 120, 140);
 
-    const html = `
+    // Input style helper (to avoid repeating long style strings)
+    const IS = `style="background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;width:100%"`;
+
+    container.insertAdjacentHTML('beforeend', `
     <div class="product-card" id="card-${p.id}">
       <div class="product-card-header" onclick="toggleCard(${p.id})">
         <div class="card-num">${p.id}</div>
         <div style="flex:1">
           <div class="card-title">${p.numero} — ${cat.label}</div>
-          <div class="card-subtitle">${p.designation || 'Configuration en cours…'}</div>
+          <div class="card-subtitle">${p.designation||'Configuration en cours…'}</div>
         </div>
         <div class="card-total" id="card-total-${p.id}">${fmtEur(total)}</div>
         <button class="btn-del" onclick="event.stopPropagation();supprimerProduit(${p.id})">✕</button>
@@ -866,76 +895,124 @@ function renderProduits() {
           <div class="tab" onclick="switchTab(${p.id},'prix',this)">Prix</div>
         </div>
 
-        <!-- ONGLET CONFIG -->
+        <!-- CONFIG -->
         <div id="tab-config-${p.id}">
+          ${p.type === 'autre' ? `
           <div class="config-cascade">
+            <div style="font-size:10px;color:var(--copper-light);margin-bottom:10px;display:flex;align-items:center;gap:7px;">
+              <span class="autre-badge">SAISIE LIBRE</span>
+              <span style="color:var(--text-muted)">Remplissez les champs selon vos besoins</span>
+            </div>
             <div class="config-step">
-              <label>① Matière</label>
-              <select id="mat-${p.id}" onchange="onMatiereChange(${p.id})">
-                <option value="">— Choisir la matière —</option>
-                ${matiereOptions}
-              </select>
+              <label>Désignation complète</label>
+              <input type="text" id="autre-desig-${p.id}" value="${p.autreDesig||''}" placeholder="Ex : Store banne motorisé, Claustra aluminium…" oninput="onAutreDesigChange(${p.id})" ${IS}>
             </div>
-            <div class="config-row2">
+            <div class="config-row2" style="margin-top:6px">
               <div class="config-step">
-                <label>② Profilé</label>
-                <select id="prof-${p.id}" onchange="onProfilChange(${p.id})" ${profilDisabled}>
-                  ${profilOptions}
-                </select>
+                <label>Matière / Fabricant</label>
+                <input type="text" id="autre-mat-${p.id}" value="${p.autreMatiere||''}" placeholder="Ex : Aluminium, Bois massif…" oninput="onAutreFieldChange(${p.id})" ${IS}>
               </div>
               <div class="config-step">
-                <label>③ Gamme</label>
-                <select id="gam-${p.id}" onchange="onGammeChange(${p.id})" ${gammeDisabled}>
-                  ${gammeOptions}
-                </select>
-              </div>
-            </div>
-            <div class="config-row2">
-              <div class="config-step">
-                <label>④ Ouverture</label>
-                <select id="ouv-${p.id}" onchange="onOuvertureChange(${p.id})" ${ouvDisabled}>
-                  ${ouvOptions}
-                </select>
-              </div>
-              <div class="config-step">
-                <label>⑤ Vitrage</label>
-                <select id="vit-${p.id}" onchange="onVitrageChange(${p.id})" ${vitDisabled}>
-                  ${vitOptions}
-                </select>
+                <label>Couleur / Finition</label>
+                <input type="text" id="autre-coul-${p.id}" value="${p.autreCouleur||''}" placeholder="Ex : RAL 7016, Blanc 9016…" oninput="onAutreFieldChange(${p.id})" ${IS}>
               </div>
             </div>
             <div class="config-row2" style="margin-top:6px">
               <div class="config-step">
-                <label>Largeur (mm)</label>
-                <input type="number" id="larg-${p.id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${p.id})" style="background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;transition:border-color 0.2s;width:100%">
+                <label>Dimensions (L×H mm)</label>
+                <input type="text" id="autre-dim-${p.id}" value="${p.autreDim||''}" placeholder="Ex : 900×1200" oninput="onAutreFieldChange(${p.id})" ${IS}>
               </div>
               <div class="config-step">
-                <label>Hauteur (mm)</label>
-                <input type="number" id="haut-${p.id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${p.id})" style="background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;transition:border-color 0.2s;width:100%">
+                <label>Référence / Note</label>
+                <input type="text" id="autre-ref-${p.id}" value="${p.autreRef||''}" placeholder="Référence ou remarque…" oninput="onAutreFieldChange(${p.id})" ${IS}>
               </div>
             </div>
           </div>
           <div class="${desigClass}" id="desig-${p.id}">${desigContent}</div>
-        </div>
+          ` : `
+          <div class="config-cascade">
 
-        <!-- ONGLET DESSIN -->
-        <div id="tab-dessin-${p.id}" style="display:none">
-          <div class="drawing-container" id="svg-container-${p.id}">
-            ${svgHtml}
+            <div class="config-step">
+              <label>① Matière</label>
+              <select id="mat-${p.id}" onchange="onMatiereChange(${p.id})">
+                <option value="">— Choisir la matière —</option>
+                ${matOpts}
+              </select>
+            </div>
+
+            <div id="fab-wrap-${p.id}" class="config-step" style="${fabHide}">
+              <label>② Fabricant</label>
+              <select id="fab-${p.id}" onchange="onFabricantChange(${p.id})" ${mat&&mat.hasFabricant?'':' disabled'}>
+                ${fabOpts}
+              </select>
+            </div>
+
+            <div id="fab-libre-wrap-${p.id}" class="config-step" style="${fabLibreHide}">
+              <label>② Fabricant <span class="autre-badge">saisie libre</span></label>
+              <input type="text" id="fab-libre-${p.id}" value="${p.fabricantLibre||''}" placeholder="Nom du fabricant…" oninput="onFabricantLibreChange(${p.id})">
+            </div>
+
+            <div id="gam-wrap-${p.id}" class="config-step" style="${gamHide}">
+              <label>③ Gamme / Profilé</label>
+              <select id="gam-${p.id}" onchange="onGammeChange(${p.id})" ${gamDis}>
+                ${gamOpts}
+              </select>
+            </div>
+
+            <div id="gam-libre-wrap-${p.id}" class="config-step" style="${gamLibreHide}">
+              <label>③ Gamme / Profilé <span class="autre-badge">saisie libre</span></label>
+              <input type="text" id="gam-libre-${p.id}" value="${p.gammeLibre||''}" placeholder="Ex : SOFTLINE 82, EuroFutur Elite…" oninput="onGammeLibreChange(${p.id})">
+            </div>
+
+            <div class="cascade-sep"></div>
+
+            <div class="config-row2">
+              <div class="config-step">
+                <label>④ Ouverture</label>
+                <select id="ouv-${p.id}" onchange="onOuvertureChange(${p.id})" ${ouvDis}>
+                  ${ouvOpts}
+                </select>
+              </div>
+              <div class="config-step">
+                <label>⑤ Vitrage</label>
+                <select id="vit-${p.id}" onchange="onVitrageChange(${p.id})" ${vitDis}>
+                  ${vitOpts}
+                </select>
+              </div>
+            </div>
+
+            <div class="config-row2" style="margin-top:6px">
+              <div class="config-step">
+                <label>Largeur (mm)</label>
+                <input type="number" id="larg-${p.id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${p.id})" ${IS}>
+              </div>
+              <div class="config-step">
+                <label>Hauteur (mm)</label>
+                <input type="number" id="haut-${p.id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${p.id})" ${IS}>
+              </div>
+            </div>
           </div>
-          ${!p.largeur || !p.hauteur ? '<div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:4px">Entrez les dimensions dans "Configuration" pour voir le dessin</div>' : ''}
+
+          <div class="${desigClass}" id="desig-${p.id}">${desigContent}</div>
+          `}
         </div>
 
-        <!-- ONGLET PRIX -->
+        <!-- DESSIN -->
+        <div id="tab-dessin-${p.id}" style="display:none">
+          <div class="drawing-container" id="svg-container-${p.id}">${svgHtml}</div>
+          ${!p.largeur||!p.hauteur?'<div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:4px">Entrez les dimensions dans "Configuration" pour voir le dessin</div>':''}
+        </div>
+
+        <!-- PRIX -->
         <div id="tab-prix-${p.id}" style="display:none">
           <div class="form-grid g3" style="margin-bottom:8px">
             <div class="form-group">
               <label>Quantité</label>
-              <input type="number" id="qty-${p.id}" value="${p.quantite}" min="1" step="1" oninput="onQtyChange(${p.id})" style="background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;">
+              <input type="number" id="qty-${p.id}" value="${p.quantite}" min="1" step="1" oninput="onQtyChange(${p.id})" ${IS}>
             </div>
             <div class="form-group" style="grid-column:span 2">
               <label>Prix fourniture HT (€)</label>
-              <input type="number" id="prix-${p.id}" value="${p.prixUnitaire}" min="0" step="1" placeholder="0,00" oninput="onPrixChange(${p.id})" style="background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;">
+              <input type="number" id="prix-${p.id}" value="${p.prixUnitaire}" min="0" step="1" placeholder="0,00" oninput="onPrixChange(${p.id})" ${IS}>
             </div>
           </div>
           <div class="checkbox-row">
@@ -945,7 +1022,7 @@ function renderProduits() {
           <div id="pose-row-${p.id}" class="form-grid g2" style="margin-top:8px;display:${p.withPose?'grid':'none'}">
             <div class="form-group">
               <label>Prix pose HT (€)</label>
-              <input type="number" id="prixpose-${p.id}" value="${p.prixPose}" min="0" step="1" placeholder="0,00" oninput="onPrixPoseChange(${p.id})" style="background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;">
+              <input type="number" id="prixpose-${p.id}" value="${p.prixPose}" min="0" step="1" placeholder="0,00" oninput="onPrixPoseChange(${p.id})" ${IS}>
             </div>
           </div>
           <div style="margin-top:10px;padding:8px 12px;background:rgba(200,120,42,0.08);border:1px solid var(--border);border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
@@ -954,104 +1031,56 @@ function renderProduits() {
           </div>
         </div>
       </div>
-    </div>`;
-    container.insertAdjacentHTML('beforeend', html);
+    </div>`);
   });
 }
 
 // ══════════════════════════════════════════════
-// SWITCH TABS
-// ══════════════════════════════════════════════
-function switchTab(id, tab, el) {
-  const tabs = ['config','dessin','prix'];
-  tabs.forEach(t => {
-    const el2 = document.getElementById(`tab-${t}-${id}`);
-    if (el2) el2.style.display = t === tab ? 'block' : 'none';
-  });
-  // Update tab buttons
-  const tabBtns = el.parentElement.querySelectorAll('.tab');
-  tabBtns.forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-
-  // Refresh SVG when switching to dessin
-  if (tab === 'dessin') renderSVG(id);
-}
-
-// ══════════════════════════════════════════════
-// FORMAT EUROS
-// ══════════════════════════════════════════════
-function fmtEur(n) {
-  return (n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
-}
-
-// ══════════════════════════════════════════════
-// UPDATE TOTAUX
+// TOTAUX & PREVIEW
 // ══════════════════════════════════════════════
 function getTotaux() {
-  const tva = parseFloat(document.getElementById('tva-select')?.value || 10);
-  const ht = produits.reduce((s,p) => s + getPrixTotal(p), 0);
-  const tvaAmt = ht * tva / 100;
-  const ttc = ht + tvaAmt;
-  return {ht, tva, tvaAmt, ttc};
+  const tva=parseFloat(document.getElementById('tva-select')?.value||10);
+  const ht=produits.reduce((s,p)=>s+getPrixTotal(p),0);
+  return {ht, tva, tvaAmt:ht*tva/100, ttc:ht+ht*tva/100};
 }
 
-// ══════════════════════════════════════════════
-// UPDATE PREVIEW
-// ══════════════════════════════════════════════
 function updatePreview() {
-  const nom = document.getElementById('clientNom')?.value || '';
-  const tel = document.getElementById('clientTel')?.value || '';
-  const email = document.getElementById('clientEmail')?.value || '';
-  const adresse = document.getElementById('clientAdresse')?.value || '';
-  const dateVal = document.getElementById('devisDate')?.value || '';
-  const acompte = document.getElementById('acompte')?.value || '30';
-  const validite = document.getElementById('validite')?.value || '30';
-  const delai = document.getElementById('delai')?.value || '';
-  const notes = document.getElementById('notes')?.value || '';
+  const nom=document.getElementById('clientNom')?.value||'';
+  const tel=document.getElementById('clientTel')?.value||'';
+  const email=document.getElementById('clientEmail')?.value||'';
+  const adresse=document.getElementById('clientAdresse')?.value||'';
+  const dateVal=document.getElementById('devisDate')?.value||'';
+  const acompte=document.getElementById('acompte')?.value||'30';
+  const validite=document.getElementById('validite')?.value||'30';
+  const delai=document.getElementById('delai')?.value||'';
+  const notes=document.getElementById('notes')?.value||'';
+  const {ht,tva,tvaAmt,ttc}=getTotaux();
 
-  const {ht, tva, tvaAmt, ttc} = getTotaux();
+  document.getElementById('tot-ht').textContent=fmtEur(ht);
+  document.getElementById('tot-tva').textContent=fmtEur(tvaAmt);
+  document.getElementById('tot-ttc').textContent=fmtEur(ttc);
+  document.getElementById('tva-label').textContent=tva;
 
-  // Update totaux in form
-  document.getElementById('tot-ht').textContent = fmtEur(ht);
-  document.getElementById('tot-tva').textContent = fmtEur(tvaAmt);
-  document.getElementById('tot-ttc').textContent = fmtEur(ttc);
-  document.getElementById('tva-label').textContent = tva;
+  const dateStr=dateVal?new Date(dateVal).toLocaleDateString('fr-FR'):new Date().toLocaleDateString('fr-FR');
+  const acompteAmt=ttc*parseFloat(acompte)/100;
 
-  // Update card totals
-  produits.forEach(p => {
-    const el = document.getElementById(`card-total-${p.id}`);
-    const el2 = document.getElementById(`card-total2-${p.id}`);
-    if (el) el.textContent = fmtEur(getPrixTotal(p));
-    if (el2) el2.textContent = fmtEur(getPrixTotal(p));
-  });
-
-  const dateStr = dateVal ? new Date(dateVal).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
-  const acompteAmt = ttc * parseFloat(acompte) / 100;
-
-  // Lignes produits preview
-  let lignes = '';
-  produits.forEach(p => {
-    if (!p.designation && !p.prixUnitaire) return;
-    const cat = CATALOGUE[p.type] || CATALOGUE['autre'];
-    const desig = p.designation || `${cat.label} — configuration en cours`;
-    const totalLigne = getPrixTotal(p);
-    lignes += `<tr>
-      <td style="color:#888;font-weight:600">${p.numero}</td>
-      <td>${desig}</td>
+  let lignes='';
+  produits.forEach(p=>{
+    const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
+    const desig=p.designation||`${cat.label}`;
+    lignes+=`<tr>
+      <td style="color:#888;font-weight:600;white-space:nowrap">${p.numero}</td>
+      <td style="font-size:9px">${desig}</td>
       <td class="r">${p.quantite}</td>
       <td class="r">${fmtEur(p.prixUnitaire)}</td>
-      ${p.withPose ? `<td class="r">${fmtEur(p.prixPose)}</td>` : '<td class="r">—</td>'}
-      <td class="r b">${fmtEur(totalLigne)}</td>
+      <td class="r">${p.withPose?fmtEur(p.prixPose):'—'}</td>
+      <td class="r b">${fmtEur(getPrixTotal(p))}</td>
     </tr>`;
   });
 
-  const logoSrc = LOGO_B64 ? `data:image/png;base64,${LOGO_B64}` : '';
-  const logoHtml = logoSrc ? `<img src="${logoSrc}" style="height:36px">` : '<div style="font-size:14px;color:#c8a060;font-weight:700;letter-spacing:2px">FENYX</div>';
-
-  const preview = document.getElementById('preview-devis');
-  preview.innerHTML = `
+  document.getElementById('preview-devis').innerHTML=`
   <div class="prev-header">
-    ${logoHtml}
+    <div style="font-size:14px;color:#c8a060;font-weight:700;letter-spacing:2px">FENYX</div>
     <div class="prev-header-r">
       <div class="prev-co-name">FENYX OUVERTURES</div>
       <div class="prev-co-sub">MENUISERIES — FENÊTRES — FERMETURES</div>
@@ -1059,43 +1088,27 @@ function updatePreview() {
     </div>
   </div>
   <div class="prev-body">
-    <div class="prev-devis-title">
-      Devis
-      <span class="prev-num">${devisNum} · ${dateStr}</span>
-    </div>
+    <div class="prev-devis-title">Devis<span class="prev-num">${devisNum} · ${dateStr}</span></div>
     <div class="prev-client">
       <div class="lbl">Client</div>
-      <div class="val">${nom || '—'}</div>
-      ${tel ? `<div style="font-size:9px;color:#666;margin-top:2px">${tel}${email ? ' · '+email : ''}</div>` : ''}
-      ${adresse ? `<div style="font-size:9px;color:#888;margin-top:1px">Chantier : ${adresse}</div>` : ''}
+      <div class="val">${nom||'—'}</div>
+      ${tel?`<div style="font-size:9px;color:#666;margin-top:2px">${tel}${email?' · '+email:''}</div>`:''}
+      ${adresse?`<div style="font-size:9px;color:#888;margin-top:1px">Chantier : ${adresse}</div>`:''}
     </div>
     <table class="prev-table">
-      <thead>
-        <tr>
-          <th>Réf.</th>
-          <th>Désignation</th>
-          <th>Qté</th>
-          <th>P.U. HT</th>
-          <th>Pose HT</th>
-          <th>Total HT</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${lignes || '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:12px;font-size:10px">Ajoutez des produits pour les voir ici</td></tr>'}
-      </tbody>
+      <thead><tr><th>Réf.</th><th>Désignation</th><th>Qté</th><th>P.U. HT</th><th>Pose HT</th><th>Total HT</th></tr></thead>
+      <tbody>${lignes||'<tr><td colspan="6" style="text-align:center;color:#aaa;padding:12px;font-size:10px">Ajoutez des produits pour les voir ici</td></tr>'}</tbody>
     </table>
-    <div class="prev-totaux">
-      <div class="prev-tot-box">
-        <div class="prev-tot-row"><span>Sous-total HT</span><span>${fmtEur(ht)}</span></div>
-        <div class="prev-tot-row"><span>TVA ${tva}%</span><span>${fmtEur(tvaAmt)}</span></div>
-        <div class="prev-tot-row ttc"><span>TOTAL TTC</span><span>${fmtEur(ttc)}</span></div>
-      </div>
-    </div>
+    <div class="prev-totaux"><div class="prev-tot-box">
+      <div class="prev-tot-row"><span>Sous-total HT</span><span>${fmtEur(ht)}</span></div>
+      <div class="prev-tot-row"><span>TVA ${tva}%</span><span>${fmtEur(tvaAmt)}</span></div>
+      <div class="prev-tot-row ttc"><span>TOTAL TTC</span><span>${fmtEur(ttc)}</span></div>
+    </div></div>
     <div class="prev-cond">
-      ${acompte ? `<b>Acompte :</b> ${acompte}% à la commande, soit ${fmtEur(acompteAmt)}<br>` : ''}
-      ${validite ? `<b>Validité :</b> ${validite} jours à compter du ${dateStr}<br>` : ''}
-      ${delai ? `<b>Délai :</b> ${delai}<br>` : ''}
-      ${notes ? `<b>Remarques :</b> ${notes}` : ''}
+      ${acompte?`<b>Acompte :</b> ${acompte}% à la commande, soit ${fmtEur(acompteAmt)}<br>`:''}
+      ${validite?`<b>Validité :</b> ${validite} jours à compter du ${dateStr}<br>`:''}
+      ${delai?`<b>Délai :</b> ${delai}<br>`:''}
+      ${notes?`<b>Remarques :</b> ${notes}`:''}
     </div>
     <div class="prev-sigs">
       <div class="prev-sig">BON POUR ACCORD<br><br>Signature client :</div>
@@ -1106,215 +1119,115 @@ function updatePreview() {
 }
 
 // ══════════════════════════════════════════════
-// GÉNÉRATION PDF
+// PDF
 // ══════════════════════════════════════════════
 function genererPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210, H = 297;
-  const margin = 14;
-
-  // Couleurs
-  const navy = [13,27,42];
-  const copper = [200,120,42];
-  const gold = [212,168,67];
-  const lightBg = [248,244,239];
-  const white = [255,255,255];
-  const darkText = [26,26,26];
-  const grayText = [102,102,102];
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210, H=297, m=14;
+  const navy=[13,27,42], copper=[200,120,42], gold=[212,168,67];
+  const lightBg=[248,244,239], white=[255,255,255], dark=[26,26,26], gray=[102,102,102];
 
   // Header
-  doc.setFillColor(...navy);
-  doc.rect(0, 0, W, 28, 'F');
-  doc.setFontSize(14);
-  doc.setTextColor(...[200,160,96]);
-  doc.setFont('helvetica','bold');
-  doc.text('FENYX OUVERTURES', margin, 11);
-  doc.setFontSize(6.5);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(...[138,154,176]);
-  doc.text('MENUISERIES — FENÊTRES — FERMETURES', margin, 16);
-  doc.setTextColor(...[192,200,212]);
-  doc.text('contact@fenyx.fr  ·  06 XX XX XX XX', margin, 21);
+  doc.setFillColor(...navy); doc.rect(0,0,W,28,'F');
+  doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
+  doc.text('FENYX OUVERTURES',m,11);
+  doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(138,154,176);
+  doc.text('MENUISERIES — FENÊTRES — FERMETURES',m,16);
+  doc.setTextColor(192,200,212); doc.text('contact@fenyx.fr  ·  06 XX XX XX XX',m,21);
 
-  // Numéro & date
-  const dateVal = document.getElementById('devisDate')?.value || '';
-  const dateStr = dateVal ? new Date(dateVal).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...white);
-  doc.text(`${devisNum}  ·  ${dateStr}`, W - margin, 11, {align:'right'});
+  const dateVal=document.getElementById('devisDate')?.value||'';
+  const dateStr=dateVal?new Date(dateVal).toLocaleDateString('fr-FR'):new Date().toLocaleDateString('fr-FR');
+  doc.setFontSize(7.5); doc.setTextColor(...white);
+  doc.text(`${devisNum}  ·  ${dateStr}`,W-m,11,{align:'right'});
 
-  let y = 36;
+  let y=36;
+  doc.setFontSize(18); doc.setFont('helvetica','bold'); doc.setTextColor(...navy);
+  doc.text('DEVIS',m,y);
+  doc.setDrawColor(...copper); doc.setLineWidth(0.7); doc.line(m,y+2,W-m,y+2);
+  y+=10;
 
-  // Titre DEVIS
-  doc.setFontSize(18);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(...navy);
-  doc.text('DEVIS', margin, y);
-  doc.setDrawColor(...copper);
-  doc.setLineWidth(0.7);
-  doc.line(margin, y+2, W-margin, y+2);
-  y += 10;
+  const nom=document.getElementById('clientNom')?.value||'—';
+  const tel=document.getElementById('clientTel')?.value||'';
+  const email=document.getElementById('clientEmail')?.value||'';
+  const adresse=document.getElementById('clientAdresse')?.value||'';
+  doc.setFillColor(...lightBg); doc.setDrawColor(...copper); doc.setLineWidth(0.5);
+  doc.rect(m,y,W-m*2,18,'FD'); doc.setLineWidth(1.5); doc.line(m,y,m,y+18);
+  doc.setFontSize(6.5); doc.setTextColor(...gray); doc.setFont('helvetica','normal'); doc.text('CLIENT',m+4,y+5);
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(...dark); doc.text(nom,m+4,y+10);
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(...gray);
+  if(tel||email) doc.text(`${tel}${tel&&email?'  ·  ':''}${email}`,m+4,y+14.5);
+  if(adresse) doc.text(`Chantier : ${adresse}`,W-m-4,y+14.5,{align:'right'});
+  y+=24;
 
-  // Bloc client
-  const nom = document.getElementById('clientNom')?.value || '—';
-  const tel = document.getElementById('clientTel')?.value || '';
-  const email = document.getElementById('clientEmail')?.value || '';
-  const adresse = document.getElementById('clientAdresse')?.value || '';
-  doc.setFillColor(...lightBg);
-  doc.setDrawColor(...copper);
-  doc.setLineWidth(0.5);
-  doc.rect(margin, y, W - margin*2, 18, 'FD');
-  doc.setLineWidth(1.5);
-  doc.line(margin, y, margin, y+18);
-  doc.setFontSize(6.5);
-  doc.setTextColor(...grayText);
-  doc.setFont('helvetica','normal');
-  doc.text('CLIENT', margin+4, y+5);
-  doc.setFontSize(10);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(...darkText);
-  doc.text(nom, margin+4, y+10);
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(...grayText);
-  if (tel || email) doc.text(`${tel}${tel && email ? '  ·  ' : ''}${email}`, margin+4, y+14.5);
-  if (adresse) doc.text(`Chantier : ${adresse}`, W-margin-4, y+14.5, {align:'right'});
-  y += 24;
+  // Tableau
+  const heads=['Réf.','Désignation','Qté','P.U. HT','Pose HT','Total HT'];
+  const cw=[14,82,10,22,22,26];
+  doc.setFillColor(...navy); doc.rect(m,y,W-m*2,7,'F');
+  doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
+  let cx=m;
+  heads.forEach((h,i)=>{ doc.text(h,cx+(i>=2?cw[i]-1:2),y+5,{align:i>=2?'right':'left'}); cx+=cw[i]; });
+  y+=7;
 
-  // Tableau produits
-  const headers = ['Réf.', 'Désignation', 'Qté', 'P.U. HT', 'Pose HT', 'Total HT'];
-  const colW = [14, 82, 10, 22, 22, 26];
-  let cx = margin;
-
-  // En-tête tableau
-  doc.setFillColor(...navy);
-  doc.rect(margin, y, W - margin*2, 7, 'F');
-  doc.setFontSize(6.5);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(...[200,160,96]);
-  headers.forEach((h, i) => {
-    doc.text(h, cx + (i >= 2 ? colW[i]-1 : 2), y+5, {align: i >= 2 ? 'right' : 'left'});
-    cx += colW[i];
-  });
-  y += 7;
-
-  // Lignes
-  doc.setFont('helvetica','normal');
-  let rowEven = false;
-  const {ht, tva, tvaAmt, ttc} = getTotaux();
-
-  produits.forEach(p => {
-    const cat = CATALOGUE[p.type] || CATALOGUE['autre'];
-    const desig = p.designation || `${cat.label}`;
-    const totalLigne = getPrixTotal(p);
-    const rowH = 7;
-
-    if (rowEven) {
-      doc.setFillColor(250, 248, 245);
-      doc.rect(margin, y, W - margin*2, rowH, 'F');
-    }
-
-    cx = margin;
-    doc.setFontSize(7);
-    doc.setTextColor(...darkText);
-
-    // Réf
-    doc.setFont('helvetica','bold');
-    doc.setTextColor(...[150,100,40]);
-    doc.text(p.numero, cx+2, y+5);
-    cx += colW[0];
-
-    // Désignation (peut être long)
-    doc.setFont('helvetica','normal');
-    doc.setTextColor(...darkText);
-    const desigTrunc = desig.length > 60 ? desig.substring(0,58)+'…' : desig;
-    doc.text(desigTrunc, cx+2, y+5);
-    cx += colW[1];
-
-    // Qté, PU, Pose, Total
-    [p.quantite, fmtEur(p.prixUnitaire), p.withPose ? fmtEur(p.prixPose) : '—', fmtEur(totalLigne)].forEach((v, i) => {
-      if (i === 3) { doc.setFont('helvetica','bold'); doc.setTextColor(...darkText); }
-      doc.text(String(v), cx + colW[2+i] - 1, y+5, {align:'right'});
-      doc.setFont('helvetica','normal');
-      cx += colW[2+i];
+  const {ht,tva,tvaAmt,ttc}=getTotaux();
+  let even=false;
+  produits.forEach(p=>{
+    if(even){doc.setFillColor(250,248,245);doc.rect(m,y,W-m*2,7,'F');}
+    cx=m;
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
+    doc.text(p.numero,cx+2,y+5); cx+=cw[0];
+    const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
+    const desig=(p.designation||cat.label).substring(0,62);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...dark); doc.text(desig,cx+2,y+5); cx+=cw[1];
+    [String(p.quantite),fmtEur(p.prixUnitaire),p.withPose?fmtEur(p.prixPose):'—',fmtEur(getPrixTotal(p))].forEach((v,i)=>{
+      if(i===3){doc.setFont('helvetica','bold');}
+      doc.text(v,cx+cw[2+i]-1,y+5,{align:'right'}); doc.setFont('helvetica','normal'); cx+=cw[2+i];
     });
-
-    doc.setDrawColor(238,238,238);
-    doc.setLineWidth(0.2);
-    doc.line(margin, y+rowH, W-margin, y+rowH);
-    y += rowH;
-    rowEven = !rowEven;
+    doc.setDrawColor(238,238,238); doc.setLineWidth(0.2); doc.line(m,y+7,W-m,y+7);
+    y+=7; even=!even;
   });
-
-  y += 4;
+  y+=4;
 
   // Totaux
-  const totW = 60;
-  const totX = W - margin - totW;
-  doc.setFontSize(8);
-
-  [[`Sous-total HT`, fmtEur(ht)],[`TVA ${tva}%`, fmtEur(tvaAmt)]].forEach(([l,v]) => {
-    doc.setFont('helvetica','normal');
-    doc.setTextColor(...grayText);
-    doc.text(l, totX, y+4);
-    doc.text(v, W-margin, y+4, {align:'right'});
-    doc.setDrawColor(238,238,238);
-    doc.line(totX, y+6, W-margin, y+6);
-    y += 7;
+  const totX=W-m-60;
+  [[`Sous-total HT`,fmtEur(ht)],[`TVA ${tva}%`,fmtEur(tvaAmt)]].forEach(([l,v])=>{
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(...gray);
+    doc.text(l,totX,y+4); doc.text(v,W-m,y+4,{align:'right'});
+    doc.setDrawColor(238,238,238); doc.line(totX,y+6,W-m,y+6); y+=7;
   });
-
-  // TOTAL TTC
-  doc.setFillColor(...lightBg);
-  doc.rect(totX-2, y, W-margin-totX+2, 9, 'F');
-  doc.setDrawColor(...copper);
-  doc.setLineWidth(0.7);
-  doc.line(totX-2, y, W-margin, y);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(10);
-  doc.setTextColor(...navy);
-  doc.text('TOTAL TTC', totX, y+7);
-  doc.setTextColor(...[180,130,40]);
-  doc.text(fmtEur(ttc), W-margin, y+7, {align:'right'});
-  y += 15;
+  doc.setFillColor(...lightBg); doc.rect(totX-2,y,W-m-totX+2,9,'F');
+  doc.setDrawColor(...copper); doc.setLineWidth(0.7); doc.line(totX-2,y,W-m,y);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...navy);
+  doc.text('TOTAL TTC',totX,y+7); doc.setTextColor(180,130,40); doc.text(fmtEur(ttc),W-m,y+7,{align:'right'});
+  y+=15;
 
   // Conditions
-  const acompte = document.getElementById('acompte')?.value || '30';
-  const validite = document.getElementById('validite')?.value || '30';
-  const delai = document.getElementById('delai')?.value || '';
-  const notes = document.getElementById('notes')?.value || '';
-  const acompteAmt = ttc * parseFloat(acompte) / 100;
-
-  doc.setFillColor(...lightBg);
-  doc.rect(margin, y, W-margin*2, 28, 'F');
-  doc.setFontSize(7);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(...grayText);
-  let condY = y + 5;
-  if (acompte) { doc.setFont('helvetica','bold'); doc.text('Acompte : ', margin+3, condY); doc.setFont('helvetica','normal'); doc.text(`${acompte}% à la commande, soit ${fmtEur(acompteAmt)}`, margin+22, condY); condY += 5; }
-  if (validite) { doc.setFont('helvetica','bold'); doc.text('Validité : ', margin+3, condY); doc.setFont('helvetica','normal'); doc.text(`${validite} jours à compter du ${dateStr}`, margin+22, condY); condY += 5; }
-  if (delai) { doc.setFont('helvetica','bold'); doc.text('Délai : ', margin+3, condY); doc.setFont('helvetica','normal'); doc.text(delai, margin+22, condY); condY += 5; }
-  if (notes) { doc.setFont('helvetica','bold'); doc.text('Remarques : ', margin+3, condY); doc.setFont('helvetica','normal'); doc.text(notes.substring(0,100), margin+28, condY); }
-  y += 33;
+  const acompte=document.getElementById('acompte')?.value||'30';
+  const validite=document.getElementById('validite')?.value||'30';
+  const delai=document.getElementById('delai')?.value||'';
+  const notes=document.getElementById('notes')?.value||'';
+  doc.setFillColor(...lightBg); doc.rect(m,y,W-m*2,28,'F');
+  let cy=y+5;
+  doc.setFontSize(7); doc.setTextColor(...gray);
+  if(acompte){doc.setFont('helvetica','bold');doc.text('Acompte : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(`${acompte}% à la commande, soit ${fmtEur(ttc*parseFloat(acompte)/100)}`,m+22,cy);cy+=5;}
+  if(validite){doc.setFont('helvetica','bold');doc.text('Validité : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(`${validite} jours à compter du ${dateStr}`,m+22,cy);cy+=5;}
+  if(delai){doc.setFont('helvetica','bold');doc.text('Délai : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(delai,m+22,cy);cy+=5;}
+  if(notes){doc.setFont('helvetica','bold');doc.text('Remarques : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(notes.substring(0,100),m+28,cy);}
+  y+=33;
 
   // Signatures
-  const sigW = (W - margin*2 - 8) / 2;
-  ['BON POUR ACCORD\nSignature client :', 'CACHET & SIGNATURE\nFenyx Ouvertures :'].forEach((lbl, i) => {
-    const sx = margin + i*(sigW+8);
-    doc.setDrawColor(220,220,220);
-    doc.setLineWidth(0.3);
-    doc.rect(sx, y, sigW, 22, 'D');
-    doc.setFontSize(6.5);
-    doc.setTextColor(...grayText);
-    lbl.split('\n').forEach((line, j) => doc.text(line, sx+3, y+5+j*5));
+  const sw=(W-m*2-8)/2;
+  ['BON POUR ACCORD\nSignature client :','CACHET & SIGNATURE\nFenyx Ouvertures :'].forEach((lbl,i)=>{
+    const sx=m+i*(sw+8);
+    doc.setDrawColor(220,220,220); doc.setLineWidth(0.3); doc.rect(sx,y,sw,22,'D');
+    doc.setFontSize(6.5); doc.setTextColor(...gray);
+    lbl.split('\n').forEach((line,j)=>doc.text(line,sx+3,y+5+j*5));
   });
 
   // Footer
-  doc.setFillColor(...navy);
-  doc.rect(0, H-12, W, 12, 'F');
-  doc.setFontSize(6.5);
-  doc.setTextColor(...[138,154,176]);
-  doc.text('FENYX OUVERTURES  ·  SIRET XXXXXXXXX  ·  TVA INTRA FR XX XXX XXX XXX', W/2, H-5, {align:'center'});
+  doc.setFillColor(...navy); doc.rect(0,H-12,W,12,'F');
+  doc.setFontSize(6.5); doc.setTextColor(138,154,176);
+  doc.text('FENYX OUVERTURES  ·  SIRET XXXXXXXXX  ·  TVA INTRA FR XX XXX XXX XXX',W/2,H-5,{align:'center'});
 
   doc.save(`Devis_Fenyx_${nom.replace(/\s+/g,'_')}_${devisNum}.pdf`);
 }
@@ -1323,25 +1236,17 @@ function genererPDF() {
 // RÉINITIALISER
 // ══════════════════════════════════════════════
 function reinitialiser() {
-  if (!confirm('Réinitialiser le devis ? Toutes les données seront perdues.')) return;
-  produits = [];
-  nextId = 1;
-  devisNum = getDevisNum();
-  ['clientNom','clientTel','clientEmail','clientAdresse','devisDate','notes','delai'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('acompte').value = '30';
-  document.getElementById('validite').value = '30';
-  renderProduits();
-  updatePreview();
+  if(!confirm('Réinitialiser le devis ? Toutes les données seront perdues.')) return;
+  produits=[]; nextId=1; devisNum=getDevisNum();
+  ['clientNom','clientTel','clientEmail','clientAdresse','devisDate','notes','delai'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('acompte').value='30';
+  document.getElementById('validite').value='30';
+  renderProduits(); updatePreview();
 }
 
-// ══════════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('devisDate').value = new Date().toISOString().split('T')[0];
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('devisDate').value=new Date().toISOString().split('T')[0];
   updatePreview();
 });
 </script>
