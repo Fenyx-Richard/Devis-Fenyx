@@ -435,6 +435,33 @@ function ajouterProduit(type) {
     numero: getNumeroForType(type),
     matiere:'', fabricant:'', gamme:'', ouverture:'', vitrage:'',
     gammeLibre:'', fabricantLibre:'',
+    // Vitrage cascade
+    vitType:'',     // 'double'|'triple'|'autre'
+    vitAspect:'',   // 'clair'|'opaque'|'autre'
+    vitRef:'',      // référence choisie dans la liste
+    vitLibre:'',    // saisie libre si type=autre ou aspect=autre
+    vitInter:'',    // 'oui'|'non'
+    vitInterRef:'', // 'Swisspacer Ultimate'|'Chromatech Ultra'
+    vitCrois:'',    // 'oui'|'non'
+    vitCroisDim:'', // saisie libre ex: "18x18mm"
+    // Pièce d'appui
+    pieceAppui:'',  // 'oui'|'non'
+    // Volet roulant intégré
+    vrOui:'',           // 'oui'|'non'
+    vrColExt:'',        // champ libre
+    vrColInt:'',        // champ libre
+    vrTablier:'',       // 'pvc'|'alu'
+    vrConsole:'',       // 'oui'|'non' — console statique si largeur > 1800mm
+    vrTablierLib:'',    // champ libre si pvc
+    vrTablierAlu:'',    // '39mm'|'43mm'|'52mm'
+    vrTablierCol:'',    // champ libre
+    vrLameFinale:'',    // champ libre
+    vrCommande:'',      // 'manuelle'|'electrique'
+    vrManuelle:'',      // 'sangle'|'manivelle'
+    vrElec:'',          // 'somfy'|'basic'|'autre'
+    vrSomfy:'',         // 'filaire'|'sans-fil'
+    vrElecLib:'',       // champ libre si autre
+    vrMoust:'',         // 'oui'|'non'
     autreDesig:'', autreMatiere:'', autreCouleur:'', autreDim:'', autreRef:'',
     // Fenêtre : configurateur vantaux
     fenNbVantaux: 1,          // 1, 2, 3
@@ -482,6 +509,9 @@ function onMatiereChange(id) {
   p.fabricant=''; p.gamme=''; p.ouverture=''; p.vitrage='';
   p.gammeLibre=''; p.fabricantLibre='';
   p.colorisMode=''; p.colorisExt=''; p.colorisInt='';
+  p.vitType=''; p.vitAspect=''; p.vitRef=''; p.vitLibre='';
+  p.vitInter=''; p.vitInterRef='';
+  p.vitCrois=''; p.vitCroisDim='';
   refreshCascade(id);
   updateDesignation(id);
 }
@@ -819,6 +849,227 @@ function buildColorisLabel(p) {
   }
 }
 
+// ══════════════════════════════════════════════
+// VITRAGE — CONFIGURATEUR CASCADE
+// ══════════════════════════════════════════════
+const VITRAGE_OPTIONS = {
+  double: {
+    clair:  ['4/16AR/4th CEKAL', '4/20AR/4th CEKAL'],
+    opaque: ['4mat/16AR/4th CEKAL', '4mat/20AR/4th'],
+  },
+  triple: {
+    clair:  ['4th/12AR/4/12AR/4th', '4th/14AR/4/14AR/4th', '4th/18AR/4/18AR/4th'],
+    opaque: ['4th/12AR/4mat/12AR/4th', '4th/14AR/4mat/14AR/4th', '4th/18AR/4mat/18AR/4th'],
+  },
+};
+
+// Types sans configurateur cascade vitrage (porte de garage, volet, autre)
+const VITRAGE_SIMPLE_TYPES = ['garage','volet','autre'];
+// Types avec vitrage libre (porte d'entrée)
+const VITRAGE_PORTE_TYPES = ['porte-entree'];
+
+function useVitrageCascade(type) {
+  return !VITRAGE_SIMPLE_TYPES.includes(type) && !VITRAGE_PORTE_TYPES.includes(type);
+}
+
+function onVitTypeChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitType   = document.getElementById(`vit-type-${id}`)?.value || '';
+  p.vitAspect = ''; p.vitRef = ''; p.vitLibre = '';
+  refreshVitrage(id);
+  buildVitrageDesignation(id);
+}
+
+function onVitAspectChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitAspect = document.getElementById(`vit-aspect-${id}`)?.value || '';
+  p.vitRef = ''; p.vitLibre = '';
+  refreshVitrage(id);
+  buildVitrageDesignation(id);
+}
+
+function onVitRefChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitRef = document.getElementById(`vit-ref-${id}`)?.value || '';
+  buildVitrageDesignation(id);
+}
+
+function onVitLibreChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitLibre = document.getElementById(`vit-libre-${id}`)?.value || '';
+  buildVitrageDesignation(id);
+}
+
+function onVitInterChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitInter = document.getElementById(`vit-inter-${id}`)?.value || '';
+  p.vitInterRef = '';
+  const refWrap = document.getElementById(`vit-inter-ref-wrap-${id}`);
+  if(refWrap) refWrap.style.display = p.vitInter === 'oui' ? 'block' : 'none';
+  buildVitrageDesignation(id);
+}
+
+function onVitInterRefChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitInterRef = document.getElementById(`vit-inter-ref-${id}`)?.value || '';
+  buildVitrageDesignation(id);
+}
+
+function onVitCroisChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitCrois = document.getElementById(`vit-crois-${id}`)?.value || '';
+  p.vitCroisDim = '';
+  const dimWrap = document.getElementById(`vit-crois-dim-wrap-${id}`);
+  if(dimWrap) dimWrap.style.display = p.vitCrois === 'oui' ? 'block' : 'none';
+  buildVitrageDesignation(id);
+}
+
+function onVitCroisDimChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vitCroisDim = document.getElementById(`vit-crois-dim-${id}`)?.value || '';
+  buildVitrageDesignation(id);
+}
+
+function refreshVitrage(id) {
+  const p = produits.find(x=>x.id===id);
+  const aspectWrap = document.getElementById(`vit-aspect-wrap-${id}`);
+  const refWrap    = document.getElementById(`vit-ref-wrap-${id}`);
+  const libreWrap  = document.getElementById(`vit-libre-wrap-${id}`);
+  if(!aspectWrap) return;
+
+  // Pas de type choisi → tout masqué
+  if(!p.vitType) {
+    aspectWrap.style.display='none';
+    if(refWrap)   refWrap.style.display='none';
+    if(libreWrap) libreWrap.style.display='none';
+    return;
+  }
+
+  // Type = autre → saisie libre directement
+  if(p.vitType === 'autre') {
+    aspectWrap.style.display='none';
+    if(refWrap)   refWrap.style.display='none';
+    if(libreWrap) { libreWrap.style.display='block'; }
+    return;
+  }
+
+  // Double ou triple → choix aspect
+  aspectWrap.style.display='block';
+
+  if(!p.vitAspect) {
+    if(refWrap)   refWrap.style.display='none';
+    if(libreWrap) libreWrap.style.display='none';
+    return;
+  }
+
+  // Aspect = autre → saisie libre
+  if(p.vitAspect === 'autre') {
+    if(refWrap)   refWrap.style.display='none';
+    if(libreWrap) { libreWrap.style.display='block'; }
+    return;
+  }
+
+  // Clair ou opaque → liste de refs
+  if(libreWrap) libreWrap.style.display='none';
+  if(refWrap) {
+    refWrap.style.display='block';
+    const sel = document.getElementById(`vit-ref-${id}`);
+    if(sel) {
+      const refs = VITRAGE_OPTIONS[p.vitType]?.[p.vitAspect] || [];
+      sel.innerHTML = '<option value="">— Choisir la composition —</option>'
+        + refs.map(r=>`<option value="${r}" ${p.vitRef===r?'selected':''}>${r}</option>`).join('');
+    }
+  }
+}
+
+function buildVitrageDesignation(id) {
+  const p = produits.find(x=>x.id===id);
+  let label = '';
+  if(p.vitType === 'autre' || p.vitAspect === 'autre') {
+    label = p.vitLibre || '';
+  } else if(p.vitType && p.vitAspect && p.vitRef) {
+    const typeLabel = p.vitType === 'double' ? 'Double vitrage' : 'Triple vitrage';
+    // Si clair : pas besoin de le préciser
+    const aspectLabel = p.vitAspect === 'opaque' ? ' Opaque' : '';
+    label = `${typeLabel}${aspectLabel} ${p.vitRef}`;
+  } else if(p.vitType && p.vitAspect) {
+    const typeLabel = p.vitType === 'double' ? 'Double vitrage' : 'Triple vitrage';
+    const aspectLabel = p.vitAspect === 'opaque' ? ' Opaque' : '';
+    label = `${typeLabel}${aspectLabel}`;
+  } else if(p.vitType) {
+    label = p.vitType === 'double' ? 'Double vitrage' : p.vitType === 'triple' ? 'Triple vitrage' : '';
+  }
+  p.vitrage = label;
+  // Intercalaire bord chaud
+  if(p.vitInter === 'oui' && p.vitInterRef) {
+    p.vitrage += ` — ${p.vitInterRef}`;
+  }
+  // Croisillons
+  if(p.vitCrois === 'oui' && p.vitCroisDim) {
+    p.vitrage += ` — Croisillons ${p.vitCroisDim}`;
+  }
+  updateDesignation(id);
+}
+
+// ══════════════════════════════════════════════
+// PIÈCE D'APPUI
+// ══════════════════════════════════════════════
+function onPieceAppuiChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.pieceAppui = document.getElementById(`pa-${id}`)?.value || '';
+  updateDesignation(id);
+}
+
+// ══════════════════════════════════════════════
+// VOLET ROULANT INTÉGRÉ
+// ══════════════════════════════════════════════
+function onVrOuiChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vrOui = document.getElementById(`vr-oui-${id}`)?.value || '';
+  const wrap = document.getElementById(`vr-body-${id}`);
+  if(wrap) wrap.style.display = p.vrOui === 'oui' ? 'block' : 'none';
+  updateDesignation(id);
+}
+function onVrChange(id, field, elId) {
+  const p = produits.find(x=>x.id===id);
+  const el = document.getElementById(elId);
+  if(el) p[field] = el.value;
+  // Refresh conditional blocks
+  const tablierAluWrap = document.getElementById(`vr-tablier-alu-wrap-${id}`);
+  const tablierLibWrap = document.getElementById(`vr-tablier-lib-wrap-${id}`);
+  if(tablierAluWrap) tablierAluWrap.style.display = p.vrTablier === 'alu' ? 'block' : 'none';
+  if(tablierLibWrap) tablierLibWrap.style.display = p.vrTablier === 'pvc' ? 'block' : 'none';
+  const manuelleWrap = document.getElementById(`vr-manuelle-wrap-${id}`);
+  const elecWrap     = document.getElementById(`vr-elec-wrap-${id}`);
+  if(manuelleWrap) manuelleWrap.style.display = p.vrCommande === 'manuelle' ? 'block' : 'none';
+  if(elecWrap)     elecWrap.style.display     = p.vrCommande === 'electrique' ? 'block' : 'none';
+  const somfyWrap = document.getElementById(`vr-somfy-wrap-${id}`);
+  const elecLibWrap = document.getElementById(`vr-elec-lib-wrap-${id}`);
+  if(somfyWrap)   somfyWrap.style.display   = p.vrElec === 'somfy' ? 'block' : 'none';
+  if(elecLibWrap) elecLibWrap.style.display = p.vrElec === 'autre' ? 'block' : 'none';
+  updateDesignation(id);
+}
+
+function buildVrLabel(p) {
+  if(p.vrOui !== 'oui') return '';
+  const parts = ['Volet roulant'];
+  if(p.vrColExt) parts.push(`ext. ${p.vrColExt}`);
+  if(p.vrColInt) parts.push(`int. ${p.vrColInt}`);
+  if(p.vrTablier === 'alu' && p.vrTablierAlu) parts.push(`Tablier alu ${p.vrTablierAlu}`);
+  else if(p.vrTablier === 'pvc' && p.vrTablierLib) parts.push(`Tablier PVC ${p.vrTablierLib}`);
+  if(p.vrConsole === 'oui') parts.push('Renfort acier avec console statique');
+  if(p.vrTablierCol) parts.push(`Coloris tablier: ${p.vrTablierCol}`);
+  if(p.vrLameFinale) parts.push(`Lame finale: ${p.vrLameFinale}`);
+  if(p.vrCommande === 'manuelle' && p.vrManuelle) parts.push(p.vrManuelle === 'sangle' ? 'Sangle' : 'Manivelle');
+  else if(p.vrCommande === 'electrique') {
+    if(p.vrElec === 'somfy' && p.vrSomfy) parts.push(`Somfy ${p.vrSomfy}`);
+    else if(p.vrElec === 'basic') parts.push('Électrique basic');
+    else if(p.vrElec === 'autre' && p.vrElecLib) parts.push(p.vrElecLib);
+  }
+  if(p.vrMoust === 'oui') parts.push('Moustiquaire intégrée');
+  return parts.join(' — ');
+}
+
 function onAutreDesigChange(id) {
   const p=produits.find(x=>x.id===id);
   const el=document.getElementById(`autre-desig-${id}`); if(el) p.autreDesig=el.value;
@@ -870,6 +1121,13 @@ function onDimChange(id) {
   const h = document.getElementById(`haut-${id}`);
   if(l) p.largeur = l.value;
   if(h) p.hauteur = h.value;
+  // Afficher/masquer la console statique selon la largeur
+  const consoleWrap = document.getElementById(`vr-console-${id}`)?.closest('.config-step');
+  if(consoleWrap) {
+    const show = parseInt(p.largeur) > 1800;
+    consoleWrap.style.display = show ? 'block' : 'none';
+    if(!show) { p.vrConsole = ''; }
+  }
   updateDesignation(id);
   renderSVG(id);
 }
@@ -913,10 +1171,6 @@ function refreshCascade(id) {
   // Coloris : visible uniquement si PVC
   const colorisWrap = document.getElementById(`coloris-wrap-${id}`);
   if(colorisWrap) colorisWrap.style.display = p.matiere === 'PVC' ? 'block' : 'none';
-
-  // Vitrage
-  const vitSel = document.getElementById(`vit-${id}`);
-  if(vitSel) vitSel.disabled = !p.matiere;
 }
 
 function refreshGamme(id) {
@@ -1018,36 +1272,19 @@ function updateDesignation(id) {
   }
   if(p.ouverture) parts.push(p.ouverture);
   if(p.largeur && p.hauteur) parts.push(`${p.largeur}×${p.hauteur}mm`);
-  // Coloris (PVC uniquement)
+  // Coloris (PVC uniquement) — une seule fois via buildColorisLabel
   if(p.matiere === 'PVC') {
     const colorisLabel = buildColorisLabel(p);
     if(colorisLabel) parts.push(colorisLabel);
   }
   if(p.vitrage && p.vitrage !== 'N/A') parts.push(p.vitrage);
 
-  // Coloris PVC
-  if(p.matiere === 'PVC' && p.colorisMode) {
-    const modeLabels = {
-      'blanc':    'Blanc',
-      'plax-ext': 'Plaxé ext.',
-      'plax-int': 'Plaxé int.',
-      'plax-2f':  'Plaxé 2 faces',
-      'bicolore': 'Bicolore',
-    };
-    let colorisStr = modeLabels[p.colorisMode] || '';
-    if(p.colorisMode === 'bicolore') {
-      const extNom = PALETTE_ALUPLAST.find(c=>c.code===p.colorisExt)?.nom || p.colorisExt;
-      const intNom = PALETTE_ALUPLAST.find(c=>c.code===p.colorisInt)?.nom || p.colorisInt;
-      if(p.colorisExt) colorisStr += ` ext: ${p.colorisExt} ${extNom}`;
-      if(p.colorisInt) colorisStr += ` / int: ${p.colorisInt} ${intNom}`;
-    } else if(p.colorisMode !== 'blanc' && p.colorisExt) {
-      const nom = PALETTE_ALUPLAST.find(c=>c.code===p.colorisExt)?.nom || '';
-      colorisStr += `: ${p.colorisExt} ${nom}`;
-    }
-    if(colorisStr) parts.push(colorisStr);
-  }
-
   p.designation = parts.length > 0 ? `${cat.label} ${parts.join(' — ')}` : '';
+  // Pièce d'appui
+  if(p.pieceAppui === 'oui') p.designation += ' — Pièce d\'appui';
+  // Volet roulant intégré
+  const vrLabel = buildVrLabel(p);
+  if(vrLabel) p.designation += '\n' + vrLabel;
 
   const box = document.getElementById(`desig-${id}`);
   if(box) {
@@ -1163,6 +1400,258 @@ function switchTab(id,tab,el){
 // ══════════════════════════════════════════════
 // RENDER PRODUITS
 // ══════════════════════════════════════════════
+// PIÈCE D'APPUI + VOLET ROULANT HTML
+// ══════════════════════════════════════════════
+function pieceAppuiVrHTML(p) {
+  const id = p.id;
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit"`;
+  const vrShow = p.vrOui === 'oui';
+  const tablierAluShow  = p.vrTablier === 'alu';
+  const tablierPvcShow  = p.vrTablier === 'pvc';
+  const manuelleShow    = p.vrCommande === 'manuelle';
+  const elecShow        = p.vrCommande === 'electrique';
+  const somfyShow       = p.vrElec === 'somfy';
+  const elecLibShow     = p.vrElec === 'autre';
+
+  const consoleShow = parseInt(p.largeur) > 1800;
+
+  return `
+  <div class="cascade-sep" style="margin-top:10px"></div>
+  <div class="config-row2" style="margin-top:8px">
+    <div class="config-step">
+      <label>Pièce d'appui</label>
+      <select id="pa-${id}" onchange="onPieceAppuiChange(${id})">
+        <option value="">— Choisir —</option>
+        <option value="non" ${p.pieceAppui==='non'?'selected':''}>Non</option>
+        <option value="oui" ${p.pieceAppui==='oui'?'selected':''}>Oui</option>
+      </select>
+    </div>
+    <div class="config-step">
+      <label>Volet roulant</label>
+      <select id="vr-oui-${id}" onchange="onVrOuiChange(${id})">
+        <option value="">— Choisir —</option>
+        <option value="non" ${p.vrOui==='non'?'selected':''}>Non</option>
+        <option value="oui" ${p.vrOui==='oui'?'selected':''}>Oui</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="vr-body-${id}" style="${vrShow?'':'display:none'}">
+    <div class="cascade-sep" style="margin-top:8px"></div>
+    <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin:6px 0 8px">Volet roulant — Détails</div>
+
+    <div class="config-row2" style="margin-bottom:6px">
+      <div class="config-step">
+        <label>Coloris ext.</label>
+        <input type="text" id="vr-col-ext-${id}" value="${p.vrColExt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColExt','vr-col-ext-${id}')" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Coloris int.</label>
+        <input type="text" id="vr-col-int-${id}" value="${p.vrColInt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColInt','vr-col-int-${id}')" ${IS}>
+      </div>
+    </div>
+
+    ${consoleShow ? `
+    <div class="config-step" style="margin-bottom:6px">
+      <label style="display:flex;align-items:center;gap:6px">Console statique <span style="font-size:9px;color:var(--copper-light);background:rgba(200,120,42,0.15);border:1px solid rgba(200,120,42,0.3);border-radius:4px;padding:1px 6px">Largeur > 1800mm</span></label>
+      <select id="vr-console-${id}" onchange="onVrChange(${id},'vrConsole','vr-console-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="non" ${p.vrConsole==='non'?'selected':''}>Non</option>
+        <option value="oui" ${p.vrConsole==='oui'?'selected':''}>Oui</option>
+      </select>
+    </div>` : ''}
+
+    <div class="config-step" style="margin-bottom:6px">
+      <label>Tablier</label>
+      <select id="vr-tablier-${id}" onchange="onVrChange(${id},'vrTablier','vr-tablier-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="pvc" ${p.vrTablier==='pvc'?'selected':''}>PVC</option>
+        <option value="alu" ${p.vrTablier==='alu'?'selected':''}>Aluminium</option>
+      </select>
+    </div>
+    <div id="vr-tablier-lib-wrap-${id}" class="config-step" style="${tablierPvcShow?'':'display:none'};margin-bottom:6px">
+      <label>Référence tablier PVC</label>
+      <input type="text" id="vr-tablier-lib-${id}" value="${p.vrTablierLib||''}" placeholder="Ex: lame 37mm…" oninput="onVrChange(${id},'vrTablierLib','vr-tablier-lib-${id}')" ${IS}>
+    </div>
+    <div id="vr-tablier-alu-wrap-${id}" class="config-step" style="${tablierAluShow?'':'display:none'};margin-bottom:6px">
+      <label>Épaisseur tablier alu</label>
+      <select id="vr-tablier-alu-${id}" onchange="onVrChange(${id},'vrTablierAlu','vr-tablier-alu-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="39mm" ${p.vrTablierAlu==='39mm'?'selected':''}>39mm</option>
+        <option value="43mm" ${p.vrTablierAlu==='43mm'?'selected':''}>43mm</option>
+        <option value="52mm" ${p.vrTablierAlu==='52mm'?'selected':''}>52mm</option>
+      </select>
+    </div>
+
+    <div class="config-row2" style="margin-bottom:6px">
+      <div class="config-step">
+        <label>Coloris tablier</label>
+        <input type="text" id="vr-tablier-col-${id}" value="${p.vrTablierCol||''}" placeholder="Ex: Blanc…" oninput="onVrChange(${id},'vrTablierCol','vr-tablier-col-${id}')" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Couleur lame finale</label>
+        <input type="text" id="vr-lame-${id}" value="${p.vrLameFinale||''}" placeholder="Ex: Gris anthracite…" oninput="onVrChange(${id},'vrLameFinale','vr-lame-${id}')" ${IS}>
+      </div>
+    </div>
+
+    <div class="config-step" style="margin-bottom:6px">
+      <label>Commande</label>
+      <select id="vr-cmd-${id}" onchange="onVrChange(${id},'vrCommande','vr-cmd-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="manuelle"    ${p.vrCommande==='manuelle'   ?'selected':''}>Manuelle</option>
+        <option value="electrique"  ${p.vrCommande==='electrique' ?'selected':''}>Électrique</option>
+      </select>
+    </div>
+    <div id="vr-manuelle-wrap-${id}" class="config-step" style="${manuelleShow?'':'display:none'};margin-bottom:6px">
+      <label>Type manuelle</label>
+      <select id="vr-manuelle-${id}" onchange="onVrChange(${id},'vrManuelle','vr-manuelle-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="sangle"    ${p.vrManuelle==='sangle'   ?'selected':''}>Sangle</option>
+        <option value="manivelle" ${p.vrManuelle==='manivelle'?'selected':''}>Manivelle</option>
+      </select>
+    </div>
+    <div id="vr-elec-wrap-${id}" style="${elecShow?'':'display:none'}">
+      <div class="config-step" style="margin-bottom:6px">
+        <label>Motorisation</label>
+        <select id="vr-elec-${id}" onchange="onVrChange(${id},'vrElec','vr-elec-${id}')">
+          <option value="">— Choisir —</option>
+          <option value="somfy" ${p.vrElec==='somfy'?'selected':''}>Somfy</option>
+          <option value="basic" ${p.vrElec==='basic'?'selected':''}>Basic</option>
+          <option value="autre" ${p.vrElec==='autre'?'selected':''}>Autre</option>
+        </select>
+      </div>
+      <div id="vr-somfy-wrap-${id}" class="config-step" style="${somfyShow?'':'display:none'};margin-bottom:6px">
+        <label>Somfy</label>
+        <select id="vr-somfy-${id}" onchange="onVrChange(${id},'vrSomfy','vr-somfy-${id}')">
+          <option value="">— Choisir —</option>
+          <option value="filaire"   ${p.vrSomfy==='filaire'  ?'selected':''}>Filaire</option>
+          <option value="sans-fil"  ${p.vrSomfy==='sans-fil' ?'selected':''}>Sans fil</option>
+        </select>
+      </div>
+      <div id="vr-elec-lib-wrap-${id}" class="config-step" style="${elecLibShow?'':'display:none'};margin-bottom:6px">
+        <label>Motorisation (saisie libre)</label>
+        <input type="text" id="vr-elec-lib-${id}" value="${p.vrElecLib||''}" placeholder="Marque / référence…" oninput="onVrChange(${id},'vrElecLib','vr-elec-lib-${id}')" ${IS}>
+      </div>
+    </div>
+
+    <div class="config-step">
+      <label>Moustiquaire intégrée</label>
+      <select id="vr-moust-${id}" onchange="onVrChange(${id},'vrMoust','vr-moust-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="non" ${p.vrMoust==='non'?'selected':''}>Non</option>
+        <option value="oui" ${p.vrMoust==='oui'?'selected':''}>Oui</option>
+      </select>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// VITRAGE CONFIG HTML (généré dans le template)
+// ══════════════════════════════════════════════
+function vitrageConfigHTML(p) {
+  const id = p.id;
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit"`;
+
+  // Volet → N/A
+  if(p.type === 'volet') {
+    return `<label style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase">⑤ Vitrage</label>
+      <div style="font-size:11px;color:var(--text-muted);padding:4px 0">N/A</div>`;
+  }
+
+  // Garage / autre → liste simple
+  if(VITRAGE_SIMPLE_TYPES.includes(p.type)) {
+    const opts = (CATALOGUE[p.type]?.vitrages||[]).map(v=>`<option value="${v}" ${p.vitrage===v?'selected':''}>${v}</option>`).join('');
+    return `<label style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;display:block;margin-bottom:4px">⑤ Vitrage</label>
+      <select id="vit-${id}" onchange="onVitrageChange(${id})" ${IS}>
+        <option value="">— Choisir —</option>${opts}
+      </select>`;
+  }
+
+  // Porte d'entrée → liste type/aspect de fenêtre
+  if(VITRAGE_PORTE_TYPES.includes(p.type)) {
+    const opts = VIT_PORTE.map(v=>`<option value="${v}" ${p.vitrage===v?'selected':''}>${v}</option>`).join('');
+    return `<label style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;display:block;margin-bottom:4px">⑤ Vitrage</label>
+      <select id="vit-${id}" onchange="onVitrageChange(${id})" ${IS}>
+        <option value="">— Choisir —</option>${opts}
+      </select>`;
+  }
+
+  // Tous les autres : cascade Double/Triple → Clair/Opaque → Composition
+  const showAspect = p.vitType && p.vitType !== 'autre';
+  const showRef    = showAspect && p.vitAspect && p.vitAspect !== 'autre';
+  const showLibre  = p.vitType === 'autre' || p.vitAspect === 'autre';
+
+  const refOpts = showRef
+    ? (VITRAGE_OPTIONS[p.vitType]?.[p.vitAspect]||[])
+        .map(r=>`<option value="${r}" ${p.vitRef===r?'selected':''}>${r}</option>`).join('')
+    : '';
+
+  return `
+    <label style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;display:block;margin-bottom:6px">⑤ Vitrage</label>
+    <div class="config-step" style="margin-bottom:6px">
+      <label>Type</label>
+      <select id="vit-type-${id}" onchange="onVitTypeChange(${id})">
+        <option value="">— Choisir —</option>
+        <option value="double" ${p.vitType==='double'?'selected':''}>Double vitrage</option>
+        <option value="triple" ${p.vitType==='triple'?'selected':''}>Triple vitrage</option>
+        <option value="autre"  ${p.vitType==='autre' ?'selected':''}>Autre (saisie libre)</option>
+      </select>
+    </div>
+    <div class="config-step" id="vit-aspect-wrap-${id}" style="${showAspect?'':'display:none'};margin-bottom:6px">
+      <label>Aspect</label>
+      <select id="vit-aspect-${id}" onchange="onVitAspectChange(${id})">
+        <option value="">— Clair / Opaque —</option>
+        <option value="clair"  ${p.vitAspect==='clair' ?'selected':''}>Clair</option>
+        <option value="opaque" ${p.vitAspect==='opaque'?'selected':''}>Opaque</option>
+        <option value="autre"  ${p.vitAspect==='autre' ?'selected':''}>Autre</option>
+      </select>
+    </div>
+    <div class="config-step" id="vit-ref-wrap-${id}" style="${showRef?'':'display:none'}">
+      <label>Composition</label>
+      <select id="vit-ref-${id}" onchange="onVitRefChange(${id})">
+        <option value="">— Choisir la composition —</option>
+        ${refOpts}
+      </select>
+    </div>
+    <div class="config-step" id="vit-libre-wrap-${id}" style="${showLibre?'':'display:none'}">
+      <label>Composition (saisie libre)</label>
+      <input type="text" id="vit-libre-${id}" value="${p.vitLibre||''}" placeholder="Ex: 4/16Ar/4 Planitherm…" oninput="onVitLibreChange(${id})" ${IS}>
+    </div>
+    <div class="cascade-sep" style="margin-top:8px"></div>
+    <div class="config-row2" style="margin-top:8px">
+      <div class="config-step">
+        <label>Intercalaire bord chaud</label>
+        <select id="vit-inter-${id}" onchange="onVitInterChange(${id})">
+          <option value="">— Choisir —</option>
+          <option value="non" ${p.vitInter==='non'?'selected':''}>Non</option>
+          <option value="oui" ${p.vitInter==='oui'?'selected':''}>Oui</option>
+        </select>
+      </div>
+      <div class="config-step" id="vit-inter-ref-wrap-${id}" style="${p.vitInter==='oui'?'':'display:none'}">
+        <label>Référence</label>
+        <select id="vit-inter-ref-${id}" onchange="onVitInterRefChange(${id})">
+          <option value="">— Choisir —</option>
+          <option value="Swisspacer Ultimate" ${p.vitInterRef==='Swisspacer Ultimate'?'selected':''}>Swisspacer Ultimate</option>
+          <option value="Chromatech Ultra"    ${p.vitInterRef==='Chromatech Ultra'   ?'selected':''}>Chromatech Ultra</option>
+        </select>
+      </div>
+    </div>
+    <div class="config-row2" style="margin-top:8px">
+      <div class="config-step">
+        <label>Croisillons</label>
+        <select id="vit-crois-${id}" onchange="onVitCroisChange(${id})">
+          <option value="">— Choisir —</option>
+          <option value="non" ${p.vitCrois==='non'?'selected':''}>Non</option>
+          <option value="oui" ${p.vitCrois==='oui'?'selected':''}>Oui</option>
+        </select>
+      </div>
+      <div class="config-step" id="vit-crois-dim-wrap-${id}" style="${p.vitCrois==='oui'?'':'display:none'}">
+        <label>Dimensions</label>
+        <input type="text" id="vit-crois-dim-${id}" value="${p.vitCroisDim||''}" placeholder="Ex: 18×18mm" oninput="onVitCroisDimChange(${id})" ${IS}>
+      </div>
+    </div>`;
+}
+
 function renderProduits() {
   const container = document.getElementById('produits-container');
   if(!container) return;
@@ -1217,15 +1706,6 @@ function renderProduits() {
     let ouvOpts = '<option value="">— Type d\'ouverture —</option>';
     if(cat.ouvertures) cat.ouvertures.forEach(o => ouvOpts += `<option value="${o}" ${p.ouverture===o?'selected':''}>${o}</option>`);
     const ouvDis = p.matiere ? '' : 'disabled';
-
-    // Vitrage options
-    let vitOpts='', vitDis='';
-    if(p.type==='volet') { vitOpts='<option value="N/A">N/A</option>'; vitDis='disabled'; }
-    else {
-      vitOpts='<option value="">— Type de vitrage —</option>';
-      vitDis = p.matiere ? '' : 'disabled';
-      cat.vitrages.forEach(v => vitOpts += `<option value="${v}" ${p.vitrage===v?'selected':''}>${v}</option>`);
-    }
 
     const desigContent = p.designation || 'La désignation apparaîtra ici au fur et à mesure de votre sélection…';
     const desigClass = p.designation ? 'designation-box' : 'designation-box empty';
@@ -1367,12 +1847,10 @@ function renderProduits() {
                 </div>`).join('')}
             </div>
 
-            <div class="config-step" style="margin-top:8px">
-              <label>⑤ Vitrage</label>
-              <select id="vit-${p.id}" onchange="onVitrageChange(${p.id})" ${vitDis}>
-                ${vitOpts}
-              </select>
+            <div style="margin-top:8px">
+              ${vitrageConfigHTML(p)}
             </div>
+            ${pieceAppuiVrHTML(p)}
             ` : `
             <div class="config-row2">
               <div class="config-step">
@@ -1382,12 +1860,10 @@ function renderProduits() {
                 </select>
               </div>
               <div class="config-step">
-                <label>⑤ Vitrage</label>
-                <select id="vit-${p.id}" onchange="onVitrageChange(${p.id})" ${vitDis}>
-                  ${vitOpts}
-                </select>
+                ${vitrageConfigHTML(p)}
               </div>
             </div>
+            ${['fenetre','porte-fenetre','baie-psk','baie-coul'].includes(p.type) ? pieceAppuiVrHTML(p) : ''}
             `}
 
             <div class="config-row2" style="margin-top:6px">
@@ -1604,27 +2080,39 @@ function genererPDF() {
   y+=24;
 
   // Tableau
-  const heads=['Réf.','Désignation','Qté','P.U. HT','Pose HT','Total HT'];
-  const cw=[14,82,10,22,22,26];
   doc.setFillColor(...navy); doc.rect(m,y,W-m*2,7,'F');
   doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
-  let cx=m;
-  heads.forEach((h,i)=>{ doc.text(h,cx+(i>=2?cw[i]-1:2),y+5,{align:i>=2?'right':'left'}); cx+=cw[i]; });
+  const hCols = [
+    { x:m+2,          txt:'Réf.',        align:'left'  },
+    { x:m+16,         txt:'Désignation', align:'left'  },
+    { x:m+96+10,      txt:'Qté',         align:'right' },
+    { x:m+96+10+24,   txt:'P.U. HT',     align:'right' },
+    { x:m+96+10+48,   txt:'Pose HT',     align:'right' },
+    { x:W-m,          txt:'Total HT',    align:'right' },
+  ];
+  hCols.forEach(c=>doc.text(c.txt, c.x, y+5, {align:c.align}));
   y+=7;
 
   const {ht,tva,tvaAmt,ttc}=getTotaux();
   let even=false;
   produits.forEach(p=>{
     if(even){doc.setFillColor(250,248,245);doc.rect(m,y,W-m*2,7,'F');}
-    cx=m;
-    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
-    doc.text(p.numero,cx+2,y+5); cx+=cw[0];
     const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
-    const desig=(p.designation||cat.label).substring(0,62);
-    doc.setFont('helvetica','normal'); doc.setTextColor(...dark); doc.text(desig,cx+2,y+5); cx+=cw[1];
-    [String(p.quantite),fmtEur(p.prixUnitaire),p.withPose?fmtEur(p.prixPose):'—',fmtEur(getPrixTotal(p))].forEach((v,i)=>{
-      if(i===3){doc.setFont('helvetica','bold');}
-      doc.text(v,cx+cw[2+i]-1,y+5,{align:'right'}); doc.setFont('helvetica','normal'); cx+=cw[2+i];
+    const desig=(p.designation||cat.label).substring(0,60);
+    // Colonnes : Réf(14) | Désig(80) | Qté(12) | PU(24) | Pose(24) | Total(28) = 182 = W-2m
+    const cols = [
+      { x: m+2,            txt: p.numero,                        align:'left',  bold:true,  color:[150,100,40] },
+      { x: m+16,           txt: desig,                           align:'left',  bold:false, color:dark },
+      { x: m+96+10,        txt: String(p.quantite),              align:'right', bold:false, color:dark },
+      { x: m+96+10+24,     txt: fmtEur(p.prixUnitaire),          align:'right', bold:false, color:dark },
+      { x: m+96+10+48,     txt: p.withPose?fmtEur(p.prixPose):'—', align:'right', bold:false, color:dark },
+      { x: W-m,            txt: fmtEur(getPrixTotal(p)),         align:'right', bold:true,  color:dark },
+    ];
+    doc.setFontSize(7);
+    cols.forEach(c=>{
+      doc.setFont('helvetica', c.bold?'bold':'normal');
+      doc.setTextColor(...c.color);
+      doc.text(c.txt, c.x, y+5, {align:c.align});
     });
     doc.setDrawColor(238,238,238); doc.setLineWidth(0.2); doc.line(m,y+7,W-m,y+7);
     y+=7; even=!even;
