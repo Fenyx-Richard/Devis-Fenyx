@@ -1122,11 +1122,11 @@ function onDimChange(id) {
   if(l) p.largeur = l.value;
   if(h) p.hauteur = h.value;
   // Afficher/masquer la console statique selon la largeur
-  const consoleWrap = document.getElementById(`vr-console-${id}`)?.closest('.config-step');
+  const consoleWrap = document.getElementById(`vr-console-wrap-${id}`);
   if(consoleWrap) {
     const show = parseInt(p.largeur) > 1800;
     consoleWrap.style.display = show ? 'block' : 'none';
-    if(!show) { p.vrConsole = ''; }
+    if(!show) p.vrConsole = '';
   }
   updateDesignation(id);
   renderSVG(id);
@@ -1451,15 +1451,14 @@ function pieceAppuiVrHTML(p) {
       </div>
     </div>
 
-    ${consoleShow ? `
-    <div class="config-step" style="margin-bottom:6px">
+    <div id="vr-console-wrap-${id}" class="config-step" style="${consoleShow?'':'display:none'};margin-bottom:6px">
       <label style="display:flex;align-items:center;gap:6px">Console statique <span style="font-size:9px;color:var(--copper-light);background:rgba(200,120,42,0.15);border:1px solid rgba(200,120,42,0.3);border-radius:4px;padding:1px 6px">Largeur > 1800mm</span></label>
       <select id="vr-console-${id}" onchange="onVrChange(${id},'vrConsole','vr-console-${id}')">
         <option value="">— Choisir —</option>
         <option value="non" ${p.vrConsole==='non'?'selected':''}>Non</option>
         <option value="oui" ${p.vrConsole==='oui'?'selected':''}>Oui</option>
       </select>
-    </div>` : ''}
+    </div>
 
     <div class="config-step" style="margin-bottom:6px">
       <label>Tablier</label>
@@ -1847,6 +1846,19 @@ function renderProduits() {
                 </div>`).join('')}
             </div>
 
+            <div class="cascade-sep" style="margin-top:10px"></div>
+            <div class="config-row2" style="margin-top:8px">
+              <div class="config-step">
+                <label>Largeur (mm)</label>
+                <input type="number" id="larg-${p.id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${p.id})" ${IS}>
+              </div>
+              <div class="config-step">
+                <label>Hauteur (mm)</label>
+                <input type="number" id="haut-${p.id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${p.id})" ${IS}>
+              </div>
+            </div>
+
+            <div class="cascade-sep" style="margin-top:10px"></div>
             <div style="margin-top:8px">
               ${vitrageConfigHTML(p)}
             </div>
@@ -1859,14 +1871,10 @@ function renderProduits() {
                   ${ouvOpts}
                 </select>
               </div>
-              <div class="config-step">
-                ${vitrageConfigHTML(p)}
-              </div>
             </div>
-            ${['fenetre','porte-fenetre','baie-psk','baie-coul'].includes(p.type) ? pieceAppuiVrHTML(p) : ''}
-            `}
 
-            <div class="config-row2" style="margin-top:6px">
+            <div class="cascade-sep" style="margin-top:10px"></div>
+            <div class="config-row2" style="margin-top:8px">
               <div class="config-step">
                 <label>Largeur (mm)</label>
                 <input type="number" id="larg-${p.id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${p.id})" ${IS}>
@@ -1876,6 +1884,13 @@ function renderProduits() {
                 <input type="number" id="haut-${p.id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${p.id})" ${IS}>
               </div>
             </div>
+
+            <div class="cascade-sep" style="margin-top:10px"></div>
+            <div class="config-step" style="margin-top:8px">
+              ${vitrageConfigHTML(p)}
+            </div>
+            ${['fenetre','porte-fenetre','baie-psk','baie-coul'].includes(p.type) ? pieceAppuiVrHTML(p) : ''}
+            `}
 
             <div id="coloris-wrap-${p.id}" style="${p.matiere==='PVC'?'':'display:none'}">
             <div class="cascade-sep" style="margin-top:10px"></div>
@@ -2096,26 +2111,43 @@ function genererPDF() {
   const {ht,tva,tvaAmt,ttc}=getTotaux();
   let even=false;
   produits.forEach(p=>{
-    if(even){doc.setFillColor(250,248,245);doc.rect(m,y,W-m*2,7,'F');}
     const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
-    const desig=(p.designation||cat.label).substring(0,60);
-    // Colonnes : Réf(14) | Désig(80) | Qté(12) | PU(24) | Pose(24) | Total(28) = 182 = W-2m
-    const cols = [
-      { x: m+2,            txt: p.numero,                        align:'left',  bold:true,  color:[150,100,40] },
-      { x: m+16,           txt: desig,                           align:'left',  bold:false, color:dark },
-      { x: m+96+10,        txt: String(p.quantite),              align:'right', bold:false, color:dark },
-      { x: m+96+10+24,     txt: fmtEur(p.prixUnitaire),          align:'right', bold:false, color:dark },
-      { x: m+96+10+48,     txt: p.withPose?fmtEur(p.prixPose):'—', align:'right', bold:false, color:dark },
-      { x: W-m,            txt: fmtEur(getPrixTotal(p)),         align:'right', bold:true,  color:dark },
-    ];
+    // Séparer désignation principale et volet roulant (ligne 2)
+    const desigParts = (p.designation||cat.label).split('\n');
+    const desig1 = desigParts[0].substring(0,80);
+    const desig2 = desigParts[1] ? desigParts[1].substring(0,80) : '';
+    const rowH = desig2 ? 12 : 7; // hauteur ligne plus grande si 2 lignes
+
+    if(even){doc.setFillColor(250,248,245);doc.rect(m,y,W-m*2,rowH,'F');}
+
     doc.setFontSize(7);
-    cols.forEach(c=>{
+    // Réf
+    doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
+    doc.text(p.numero, m+2, y+5);
+    // Désignation ligne 1
+    doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
+    doc.text(desig1, m+16, y+5);
+    // Désignation ligne 2 (volet roulant)
+    if(desig2) {
+      doc.setFontSize(6.5); doc.setTextColor(100,100,100);
+      doc.text(desig2, m+16, y+10);
+      doc.setFontSize(7); doc.setTextColor(...dark);
+    }
+    // Colonnes numériques (centrées sur la hauteur de ligne)
+    const cy2 = desig2 ? y+7 : y+5;
+    const numCols = [
+      { x:m+96+10,    txt:String(p.quantite),              bold:false },
+      { x:m+96+10+24, txt:fmtEur(p.prixUnitaire),          bold:false },
+      { x:m+96+10+48, txt:p.withPose?fmtEur(p.prixPose):'—', bold:false },
+      { x:W-m,        txt:fmtEur(getPrixTotal(p)),          bold:true  },
+    ];
+    numCols.forEach(c=>{
       doc.setFont('helvetica', c.bold?'bold':'normal');
-      doc.setTextColor(...c.color);
-      doc.text(c.txt, c.x, y+5, {align:c.align});
+      doc.setTextColor(...dark);
+      doc.text(c.txt, c.x, cy2, {align:'right'});
     });
-    doc.setDrawColor(238,238,238); doc.setLineWidth(0.2); doc.line(m,y+7,W-m,y+7);
-    y+=7; even=!even;
+    doc.setDrawColor(238,238,238); doc.setLineWidth(0.2); doc.line(m,y+rowH,W-m,y+rowH);
+    y+=rowH; even=!even;
   });
   y+=4;
 
