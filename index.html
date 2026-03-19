@@ -71,7 +71,15 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
 .autre-badge{display:inline-block;background:rgba(200,120,42,0.15);border:1px solid rgba(200,120,42,0.35);color:var(--copper-light);border-radius:4px;padding:1px 7px;font-size:9px;letter-spacing:1px;margin-left:6px;vertical-align:middle;}
 /* SVG */
 .drawing-container{background:white;border-radius:6px;padding:8px;margin:8px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
-/* BUTTONS */
+/* PHOTOS */
+.photo-zone{border:2px dashed var(--border);border-radius:8px;overflow:hidden;position:relative;cursor:pointer;transition:border-color 0.2s;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.1);}
+.photo-zone:hover{border-color:var(--copper);}
+.photo-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-muted);font-size:11px;pointer-events:none;}
+.photo-placeholder .icon{font-size:28px;}
+.photo-zone img{width:100%;height:100%;object-fit:cover;display:none;}
+.photo-remove{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;display:none;align-items:center;justify-content:center;z-index:2;}
+.photo-zone:hover .photo-remove{display:flex;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:7px;font-family:inherit;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all 0.2s;font-weight:500;}
 .btn-primary{background:linear-gradient(135deg,var(--copper),var(--copper-light));color:white;width:100%;justify-content:center;font-size:12px;padding:12px;box-shadow:0 4px 20px rgba(200,120,42,0.3);}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 25px rgba(200,120,42,0.45);}
@@ -309,7 +317,7 @@ const CATALOGUE = {
         gammes: ["Standard", "Blindée", "Anti-effraction"],
       },
     },
-    ouvertures: ["1 vantail", "1 vantail + imposte", "2 vantaux", "2 vantaux + imposte"],
+    ouvertures: null, // géré par configurateur dédié
     vitrages: VIT_PORTE,
   },
 
@@ -327,7 +335,7 @@ const CATALOGUE = {
         gammes: ["À compléter"],
       },
     },
-    ouvertures: ["2 vantaux", "3 vantaux", "4 vantaux", "Galandage 2 vantaux", "Galandage 4 vantaux"],
+    ouvertures: ["1 ouvrant actif", "2 ouvrants actifs"],
     vitrages: VIT_BAIE,
   },
 
@@ -350,25 +358,16 @@ const CATALOGUE = {
         gammes: ["À compléter"],
       },
     },
-    ouvertures: ["Coulissant 2 vantaux", "Coulissant 3 vantaux", "Coulissant 4 vantaux"],
+    ouvertures: null, // géré par configurateur vantaux dédié
     vitrages: VIT_BAIE,
   },
 
   garage: {
     label: "Porte de garage",
     prefix: "PG.",
-    matieres: {
-      "Acier": {
-        hasFabricant: false,
-        gammes: ["Standard", "Thermique", "Design", "Premium"],
-      },
-      "Aluminium": {
-        hasFabricant: false,
-        gammes: ["Standard", "Thermique", "Premium", "Architecte"],
-      },
-    },
-    ouvertures: ["Sectionnelle plafond", "Sectionnelle débordante", "Basculante", "Coulissante latérale", "Enroulable"],
-    vitrages: ["Plein (sans vitrage)", "Hublots", "Lanterneau haut", "Vitré total"],
+    matieres: {},       // pas de matière — configurateur dédié
+    ouvertures: null,   // géré par configurateur dédié
+    vitrages: null,
   },
 
   volet: {
@@ -464,10 +463,43 @@ function ajouterProduit(type) {
     vrMoust:'',         // 'oui'|'non'
     autreDesig:'', autreMatiere:'', autreCouleur:'', autreDim:'', autreRef:'',
     // Fenêtre : configurateur vantaux
-    fenNbVantaux: 1,          // 1, 2, 3
-    fenVantaux: [{ouv:''}],   // [{ouv:'fixe'|'of'|'of+ob'}] par vantail
-    fenImposte: '',           // ''|'imposte'|'allege'
-    fenImpostOuv: '',         // 'fixe'|'ob'
+    fenNbVantaux: 1,
+    fenVantaux: [{ouv:''}],
+    fenImposte: '',
+    fenImpostOuv: '',
+    // Porte-fenêtre : seuil
+    pfSeuil: '',        // 'plat-alu'|'dormant'
+    // Baie coulissante : configurateur vantaux
+    bcNbVantaux: 2,
+    bcVantaux: [{ouv:''},{ouv:''}],
+    // Volet roulant standalone
+    vrType: '',
+    // Porte de garage
+    pgType: '',         // 'sectionnelle'|'battante'
+    pgModele: '',       // 'X'|'F'|'R' (sectionnelle)
+    pgCommande: '',     // 'manuel'|'electrique'
+    pgMoteur: '',       // 'somfy'|'autre'
+    pgSomfy: '',        // 'dexxo-compact'|'dexxo-smart'
+    pgMoteurLib: '',    // saisie libre si autre
+    pgLargeur: '',
+    pgHauteur: '',
+    pgColoris: '',      // saisie libre
+    pgSurface: '',      // 'lisse'|'woodgrain'
+    pgNervures: '',     // 'etroites'|'larges'|'sans'
+    pgBattanteLib: '',
+    // Note libre produit
+    notesProduit: '',
+    // Photos
+    photoInt: '',   // base64 vue intérieure
+    photoExt: '',   // base64 vue extérieure  // saisie libre si battante         // 'exterieur'|'monobloc'|'caisson' // [{ouv:'fixe'|'coulissant'}]
+    // Porte d'entrée
+    peSens: '',         // 'interieur'|'exterieur'
+    peOuverture: '',    // val de PE_OUVERTURES
+    peSpecial: '',      // saisie libre si special
+    peElems: {},        // { 'v1': {type:'',vitType:'',vitAspect:'',vitRef:'',vitLibre:'',deco:''}, ... }
+    // Porte d'entrée : volet roulant simplifié
+    peVr: '',           // 'oui'|'non'
+    peVrLib: '',        // saisie libre si oui
     // Coloris PVC
     colorisMode: '',          // ''|'blanc'|'plax-ext'|'plax-int'|'plax-2f'|'bicolore'
     colorisExt: '',           // code AP pour face ext (ou les 2 faces en plax-2f)
@@ -606,7 +638,7 @@ function renderFenImposteOuv(id) {
   const wrap = document.getElementById(`fen-imposte-ouv-wrap-${id}`);
   if(!wrap) return;
   if(!p.fenImposte) { wrap.style.display='none'; return; }
-  const lbl = p.fenImposte === 'imposte' ? 'Ouverture imposte' : 'Ouverture allège';
+  const lbl = (p.type === 'porte-fenetre' || p.fenImposte === 'imposte') ? 'Ouverture imposte' : 'Ouverture allège';
   wrap.style.display = 'block';
   wrap.innerHTML = `
     <div class="config-step">
@@ -617,6 +649,12 @@ function renderFenImposteOuv(id) {
         <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB (oscillo-battant)</option>
       </select>
     </div>`;
+}
+
+function onPfSeuilChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.pfSeuil = document.getElementById(`pf-seuil-${id}`)?.value || '';
+  buildFenDesignation(id);
 }
 
 function buildFenDesignation(id) {
@@ -639,6 +677,11 @@ function buildFenDesignation(id) {
 
   // Stocker dans p.ouverture pour la désignation commune
   p.ouverture = [ouvertureStr, imposteStr].filter(Boolean).join(' + ');
+  // Seuil (porte-fenêtre uniquement)
+  if(p.type === 'porte-fenetre' && p.pfSeuil) {
+    const seuilLabel = p.pfSeuil === 'plat-alu' ? 'Seuil plat aluminium' : 'Seuil dormant fenêtre';
+    p.ouverture = [p.ouverture, seuilLabel].filter(Boolean).join(' — ');
+  }
   updateDesignation(id);
   renderSVG(id);
 }
@@ -1070,6 +1113,658 @@ function buildVrLabel(p) {
   return parts.join(' — ');
 }
 
+function buildVrStandaloneLabel(p) {
+  if(p.type !== 'volet') return '';
+  const typeLabels = { exterieur:'Extérieur', monobloc:'Monobloc', caisson:'Remplissage caisson' };
+  const parts = [];
+  if(p.vrType) parts.push(typeLabels[p.vrType] || p.vrType);
+  if(p.vrColExt) parts.push(`ext. ${p.vrColExt}`);
+  if(p.vrColInt) parts.push(`int. ${p.vrColInt}`);
+  if(p.vrTablier === 'alu' && p.vrTablierAlu) parts.push(`Tablier alu ${p.vrTablierAlu}`);
+  else if(p.vrTablier === 'pvc' && p.vrTablierLib) parts.push(`Tablier PVC ${p.vrTablierLib}`);
+  if(p.vrConsole === 'oui') parts.push('Renfort acier avec console statique');
+  if(p.vrTablierCol) parts.push(`Coloris tablier: ${p.vrTablierCol}`);
+  if(p.vrLameFinale) parts.push(`Lame finale: ${p.vrLameFinale}`);
+  if(p.vrCommande === 'manuelle' && p.vrManuelle) parts.push(p.vrManuelle === 'sangle' ? 'Sangle' : 'Manivelle');
+  else if(p.vrCommande === 'electrique') {
+    if(p.vrElec === 'somfy' && p.vrSomfy) parts.push(`Somfy ${p.vrSomfy}`);
+    else if(p.vrElec === 'basic') parts.push('Électrique basic');
+    else if(p.vrElec === 'autre' && p.vrElecLib) parts.push(p.vrElecLib);
+  }
+  if(p.vrMoust === 'oui') parts.push('Moustiquaire intégrée');
+  return parts.join(' — ');
+}
+
+// ══════════════════════════════════════════════
+// PORTE D'ENTRÉE — CONFIGURATEUR
+// ══════════════════════════════════════════════
+const PE_OUVERTURES = [
+  { val:'1v',               lbl:'1 vantail',                      elems:['v1'] },
+  { val:'1v-imposte',       lbl:'1 vantail + imposte',            elems:['v1','imposte'] },
+  { val:'1v-tierce',        lbl:'1 vantail + tierce',             elems:['v1','tierce'] },
+  { val:'1v-tierce-imposte',lbl:'1 vantail + tierce + imposte',   elems:['v1','tierce','imposte'] },
+  { val:'2v',               lbl:'2 vantaux',                      elems:['v1','v2'] },
+  { val:'2v-imposte',       lbl:'2 vantaux + imposte',            elems:['v1','v2','imposte'] },
+  { val:'3v',               lbl:'3 vantaux',                      elems:['v1','v2','v3'] },
+  { val:'3v-imposte',       lbl:'3 vantaux + imposte',            elems:['v1','v2','v3','imposte'] },
+  { val:'special',          lbl:'Spécial (saisie libre)',          elems:[] },
+];
+
+const PE_ELEM_LABELS = { v1:'Vantail 1', v2:'Vantail 2', v3:'Vantail 3', tierce:'Tierce', imposte:'Imposte' };
+
+function getPeElems(peOuverture) {
+  return PE_OUVERTURES.find(o=>o.val===peOuverture)?.elems || [];
+}
+
+function initPeElems(p) {
+  const elems = getPeElems(p.peOuverture);
+  // Conserver les valeurs existantes, initialiser les manquantes
+  const newElems = {};
+  elems.forEach(e => {
+    newElems[e] = p.peElems[e] || { type:'', vitType:'', vitAspect:'', vitRef:'', vitLibre:'', vitInter:'', vitInterRef:'', vitCrois:'', vitCroisDim:'', deco:'' };
+  });
+  p.peElems = newElems;
+}
+
+function onPeSensChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.peSens = document.getElementById(`pe-sens-${id}`)?.value || '';
+  buildPeDesignation(id);
+}
+
+function onPeOuvertureChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.peOuverture = document.getElementById(`pe-ouv-${id}`)?.value || '';
+  p.peSpecial = '';
+  initPeElems(p);
+  // Refresh the elements configurator zone
+  const zone = document.getElementById(`pe-elems-zone-${id}`);
+  if(zone) zone.innerHTML = peElemsHTML(p);
+  const libWrap = document.getElementById(`pe-special-wrap-${id}`);
+  if(libWrap) libWrap.style.display = p.peOuverture === 'special' ? 'block' : 'none';
+  buildPeDesignation(id);
+}
+
+function onPeSpecialChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.peSpecial = document.getElementById(`pe-special-${id}`)?.value || '';
+  buildPeDesignation(id);
+}
+
+function onPeElemTypeChange(id, elem) {
+  const p = produits.find(x=>x.id===id);
+  if(!p.peElems[elem]) p.peElems[elem] = {};
+  p.peElems[elem].type = document.getElementById(`pe-${elem}-type-${id}`)?.value || '';
+  // Show/hide vitrage/deco blocks
+  const vitWrap  = document.getElementById(`pe-${elem}-vit-wrap-${id}`);
+  const decoWrap = document.getElementById(`pe-${elem}-deco-wrap-${id}`);
+  if(vitWrap)  vitWrap.style.display  = p.peElems[elem].type === 'vitre'  ? 'block' : 'none';
+  if(decoWrap) decoWrap.style.display = p.peElems[elem].type === 'deco'   ? 'block' : 'none';
+  buildPeDesignation(id);
+}
+
+function onPeElemVitChange(id, elem, field, elId) {
+  const p = produits.find(x=>x.id===id);
+  if(!p.peElems[elem]) p.peElems[elem] = {};
+  const el = document.getElementById(elId);
+  if(el) p.peElems[elem][field] = el.value;
+
+  const e = p.peElems[elem];
+  // Refresh aspect
+  const aspectWrap = document.getElementById(`pe-${elem}-vit-aspect-wrap-${id}`);
+  const refWrap    = document.getElementById(`pe-${elem}-vit-ref-wrap-${id}`);
+  const libreWrap  = document.getElementById(`pe-${elem}-vit-libre-wrap-${id}`);
+
+  if(aspectWrap) aspectWrap.style.display = (e.vitType && e.vitType !== 'autre') ? 'block' : 'none';
+  if(e.vitType === 'autre') {
+    if(refWrap)   refWrap.style.display   = 'none';
+    if(libreWrap) libreWrap.style.display = 'block';
+  } else if(e.vitAspect && e.vitAspect !== 'autre') {
+    if(libreWrap) libreWrap.style.display = 'none';
+    if(refWrap) {
+      refWrap.style.display = 'block';
+      const sel = document.getElementById(`pe-${elem}-vit-ref-${id}`);
+      if(sel) {
+        const refs = VITRAGE_OPTIONS[e.vitType]?.[e.vitAspect] || [];
+        const cur = e.vitRef;
+        sel.innerHTML = '<option value="">— Composition —</option>'
+          + refs.map(r=>`<option value="${r}" ${cur===r?'selected':''}>${r}</option>`).join('');
+      }
+    }
+  } else if(e.vitAspect === 'autre') {
+    if(refWrap)   refWrap.style.display   = 'none';
+    if(libreWrap) libreWrap.style.display = 'block';
+  } else {
+    if(refWrap)   refWrap.style.display   = 'none';
+    if(libreWrap) libreWrap.style.display = 'none';
+  }
+  buildPeDesignation(id);
+}
+
+function onPeElemDecoChange(id, elem) {
+  const p = produits.find(x=>x.id===id);
+  if(!p.peElems[elem]) p.peElems[elem] = {};
+  p.peElems[elem].deco = document.getElementById(`pe-${elem}-deco-${id}`)?.value || '';
+  buildPeDesignation(id);
+}
+
+function peElemVitrageHTML(p, elem) {
+  const id = p.id;
+  const e = p.peElems[elem] || {};
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:5px;font-size:11px;outline:none;font-family:inherit"`;
+  const showAspect = e.vitType && e.vitType !== 'autre';
+  const showRef    = showAspect && e.vitAspect && e.vitAspect !== 'autre';
+  const showLibre  = e.vitType === 'autre' || e.vitAspect === 'autre';
+  const refOpts = showRef ? (VITRAGE_OPTIONS[e.vitType]?.[e.vitAspect]||[]).map(r=>`<option value="${r}" ${e.vitRef===r?'selected':''}>${r}</option>`).join('') : '';
+
+  return `<div id="pe-${elem}-vit-wrap-${id}" style="${e.type==='vitre'?'':'display:none'};margin-top:6px;padding:8px;background:rgba(0,0,0,0.15);border-radius:6px;border:1px solid var(--border)">
+    <div class="config-row2" style="margin-bottom:5px">
+      <div class="config-step">
+        <label style="font-size:9px">Type</label>
+        <select id="pe-${elem}-vit-type-${id}" onchange="onPeElemVitChange(${id},'${elem}','vitType','pe-${elem}-vit-type-${id}')" ${IS}>
+          <option value="">—</option>
+          <option value="double" ${e.vitType==='double'?'selected':''}>Double</option>
+          <option value="triple" ${e.vitType==='triple'?'selected':''}>Triple</option>
+          <option value="autre"  ${e.vitType==='autre' ?'selected':''}>Autre</option>
+        </select>
+      </div>
+      <div class="config-step" id="pe-${elem}-vit-aspect-wrap-${id}" style="${showAspect?'':'display:none'}">
+        <label style="font-size:9px">Aspect</label>
+        <select id="pe-${elem}-vit-aspect-${id}" onchange="onPeElemVitChange(${id},'${elem}','vitAspect','pe-${elem}-vit-aspect-${id}')" ${IS}>
+          <option value="">—</option>
+          <option value="clair"  ${e.vitAspect==='clair' ?'selected':''}>Clair</option>
+          <option value="opaque" ${e.vitAspect==='opaque'?'selected':''}>Opaque</option>
+          <option value="autre"  ${e.vitAspect==='autre' ?'selected':''}>Autre</option>
+        </select>
+      </div>
+    </div>
+    <div class="config-step" id="pe-${elem}-vit-ref-wrap-${id}" style="${showRef?'':'display:none'};margin-bottom:5px">
+      <label style="font-size:9px">Composition</label>
+      <select id="pe-${elem}-vit-ref-${id}" onchange="onPeElemVitChange(${id},'${elem}','vitRef','pe-${elem}-vit-ref-${id}')" ${IS}>
+        <option value="">— Choisir —</option>${refOpts}
+      </select>
+    </div>
+    <div class="config-step" id="pe-${elem}-vit-libre-wrap-${id}" style="${showLibre?'':'display:none'}">
+      <label style="font-size:9px">Composition (libre)</label>
+      <input type="text" id="pe-${elem}-vit-libre-${id}" value="${e.vitLibre||''}" placeholder="Ex: 4/16Ar/4…" oninput="onPeElemVitChange(${id},'${elem}','vitLibre','pe-${elem}-vit-libre-${id}')" ${IS}>
+    </div>
+  </div>`;
+}
+
+function peElemsHTML(p) {
+  const id = p.id;
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit"`;
+  const elems = getPeElems(p.peOuverture);
+  if(!elems.length) return '';
+  return elems.map(elem => {
+    const e = p.peElems[elem] || {};
+    return `
+    <div style="background:rgba(0,0,0,0.1);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:10px;color:var(--copper-light);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">${PE_ELEM_LABELS[elem]||elem}</div>
+      <div class="config-step">
+        <label>Remplissage</label>
+        <select id="pe-${elem}-type-${id}" onchange="onPeElemTypeChange(${id},'${elem}')">
+          <option value="">— Choisir —</option>
+          <option value="vitre"  ${e.type==='vitre' ?'selected':''}>Vitré</option>
+          <option value="plein"  ${e.type==='plein' ?'selected':''}>Plein</option>
+          <option value="deco"   ${e.type==='deco'  ?'selected':''}>Panneau décoratif</option>
+        </select>
+      </div>
+      ${peElemVitrageHTML(p, elem)}
+      <div id="pe-${elem}-deco-wrap-${id}" style="${e.type==='deco'?'':'display:none'};margin-top:6px" class="config-step">
+        <label>Panneau décoratif (description)</label>
+        <input type="text" id="pe-${elem}-deco-${id}" value="${e.deco||''}" placeholder="Ex: Inox brossé, Bois wengé…" oninput="onPeElemDecoChange(${id},'${elem}')" ${IS}>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildPeDesignation(id) {
+  const p = produits.find(x=>x.id===id);
+  const parts = [];
+  if(p.peSens) parts.push(p.peSens === 'interieur' ? 'Ouverture intérieure' : 'Ouverture extérieure');
+  if(p.peOuverture === 'special') {
+    if(p.peSpecial) parts.push(p.peSpecial);
+  } else {
+    const found = PE_OUVERTURES.find(o => o.val === p.peOuverture);
+    if(found) parts.push(found.lbl);
+  }
+  // Détail des éléments
+  const elems = getPeElems(p.peOuverture);
+  elems.forEach(elem => {
+    const e = p.peElems[elem];
+    if(!e || !e.type) return;
+    const lbl = PE_ELEM_LABELS[elem] || elem;
+    if(e.type === 'plein') {
+      parts.push(`${lbl}: Plein`);
+    } else if(e.type === 'deco' && e.deco) {
+      parts.push(`${lbl}: Panneau ${e.deco}`);
+    } else if(e.type === 'vitre') {
+      let vitStr = '';
+      if(e.vitType === 'autre' || e.vitAspect === 'autre') { vitStr = e.vitLibre; }
+      else if(e.vitType && e.vitAspect && e.vitRef) {
+        const tl = e.vitType === 'double' ? 'Double vitrage' : 'Triple vitrage';
+        const al = e.vitAspect === 'opaque' ? ' Opaque' : '';
+        vitStr = `${tl}${al} ${e.vitRef}`;
+      } else if(e.vitType) {
+        vitStr = e.vitType === 'double' ? 'Double vitrage' : 'Triple vitrage';
+      }
+      if(vitStr) parts.push(`${lbl}: ${vitStr}`);
+      else parts.push(`${lbl}: Vitré`);
+    }
+  });
+  p.ouverture = parts.join(' — ');
+  updateDesignation(id);
+}
+
+function onPeVrChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.peVr = document.getElementById(`pe-vr-${id}`)?.value || '';
+  const libWrap = document.getElementById(`pe-vr-lib-wrap-${id}`);
+  if(libWrap) libWrap.style.display = p.peVr === 'oui' ? 'block' : 'none';
+  updateDesignation(id);
+}
+function onPeVrLibChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.peVrLib = document.getElementById(`pe-vr-lib-${id}`)?.value || '';
+  updateDesignation(id);
+}
+
+// ══════════════════════════════════════════════
+// BAIE COULISSANTE — CONFIGURATEUR VANTAUX
+// ══════════════════════════════════════════════
+function onBcNbVantauxChange(id) {
+  const p = produits.find(x=>x.id===id);
+  const n = parseInt(document.getElementById(`bc-nb-${id}`)?.value||2);
+  p.bcNbVantaux = n;
+  while(p.bcVantaux.length < n) p.bcVantaux.push({ouv:''});
+  p.bcVantaux = p.bcVantaux.slice(0, n);
+  renderBcVantaux(id);
+  buildBcDesignation(id);
+}
+
+function onBcVantailChange(id, vi) {
+  const p = produits.find(x=>x.id===id);
+  p.bcVantaux[vi].ouv = document.getElementById(`bc-v-${id}-${vi}`)?.value || '';
+  buildBcDesignation(id);
+}
+
+function renderBcVantaux(id) {
+  const p = produits.find(x=>x.id===id);
+  const wrap = document.getElementById(`bc-vantaux-wrap-${id}`);
+  if(!wrap) return;
+  wrap.className = p.bcNbVantaux <= 2 ? 'config-row2' : p.bcNbVantaux === 3 ? 'config-row3' : 'config-row2';
+  wrap.innerHTML = p.bcVantaux.map((v,i) => `
+    <div class="config-step">
+      <label>V${i+1}</label>
+      <select id="bc-v-${id}-${i}" onchange="onBcVantailChange(${id},${i})">
+        <option value="">— Choisir —</option>
+        <option value="fixe"       ${v.ouv==='fixe'       ?'selected':''}>Fixe</option>
+        <option value="coulissant" ${v.ouv==='coulissant' ?'selected':''}>Coulissant</option>
+      </select>
+    </div>`).join('');
+}
+
+function buildBcDesignation(id) {
+  const p = produits.find(x=>x.id===id);
+  const vParts = p.bcVantaux.map((v,i) => v.ouv ? `V${i+1}:${v.ouv==='fixe'?'Fixe':'Coul.'}` : '').filter(Boolean);
+  p.ouverture = `${p.bcNbVantaux} vantaux${vParts.length ? ' ('+vParts.join(', ')+')' : ''}`;
+  updateDesignation(id);
+}
+
+// ══════════════════════════════════════════════
+// VOLET ROULANT STANDALONE
+// ══════════════════════════════════════════════
+function onVrTypeChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.vrType = document.getElementById(`vr-type-${id}`)?.value || '';
+  if(p.vrType !== 'monobloc') p.vrConsole = '';
+  const cw = document.getElementById(`vr-console-standalone-wrap-${id}`);
+  if(cw) cw.style.display = (p.vrType === 'monobloc' && parseInt(p.largeur) > 1800) ? 'block' : 'none';
+  updateDesignation(id);
+}
+
+function voletStandaloneHTML(p) {
+  const id = p.id;
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit"`;
+  const vrShow = p.vrOui === 'oui'; // réutilise les champs vrOui etc. du volet intégré
+
+  // On réutilise tous les champs vrXxx déjà définis
+  const tablierAluShow = p.vrTablier === 'alu';
+  const tablierPvcShow = p.vrTablier === 'pvc';
+  const manuelleShow   = p.vrCommande === 'manuelle';
+  const elecShow       = p.vrCommande === 'electrique';
+  const somfyShow      = p.vrElec === 'somfy';
+  const elecLibShow    = p.vrElec === 'autre';
+
+  return `
+    <div class="cascade-sep"></div>
+    <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin:8px 0 6px">④ Type de volet</div>
+    <div class="config-step" style="margin-bottom:8px">
+      <label>Type d'installation</label>
+      <select id="vr-type-${id}" onchange="onVrTypeChange(${id})">
+        <option value="">— Choisir —</option>
+        <option value="exterieur" ${p.vrType==='exterieur'?'selected':''}>Extérieur</option>
+        <option value="monobloc"  ${p.vrType==='monobloc' ?'selected':''}>Monobloc</option>
+        <option value="caisson"   ${p.vrType==='caisson'  ?'selected':''}>Remplissage caisson</option>
+      </select>
+    </div>
+    <div class="cascade-sep" style="margin-top:8px"></div>
+    <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin:6px 0 8px">Détails</div>
+
+    <div class="config-row2" style="margin-bottom:6px">
+      <div class="config-step">
+        <label>Coloris ext.</label>
+        <input type="text" id="vr-col-ext-${id}" value="${p.vrColExt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColExt','vr-col-ext-${id}')" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Coloris int.</label>
+        <input type="text" id="vr-col-int-${id}" value="${p.vrColInt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColInt','vr-col-int-${id}')" ${IS}>
+      </div>
+    </div>
+
+    <div class="config-step" style="margin-bottom:6px">
+      <label>Tablier</label>
+      <select id="vr-tablier-${id}" onchange="onVrChange(${id},'vrTablier','vr-tablier-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="pvc" ${p.vrTablier==='pvc'?'selected':''}>PVC</option>
+        <option value="alu" ${p.vrTablier==='alu'?'selected':''}>Aluminium</option>
+      </select>
+    </div>
+    <div id="vr-tablier-lib-wrap-${id}" class="config-step" style="${tablierPvcShow?'':'display:none'};margin-bottom:6px">
+      <label>Référence tablier PVC</label>
+      <input type="text" id="vr-tablier-lib-${id}" value="${p.vrTablierLib||''}" placeholder="Ex: lame 37mm…" oninput="onVrChange(${id},'vrTablierLib','vr-tablier-lib-${id}')" ${IS}>
+    </div>
+    <div id="vr-tablier-alu-wrap-${id}" class="config-step" style="${tablierAluShow?'':'display:none'};margin-bottom:6px">
+      <label>Épaisseur tablier alu</label>
+      <select id="vr-tablier-alu-${id}" onchange="onVrChange(${id},'vrTablierAlu','vr-tablier-alu-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="39mm" ${p.vrTablierAlu==='39mm'?'selected':''}>39mm</option>
+        <option value="43mm" ${p.vrTablierAlu==='43mm'?'selected':''}>43mm</option>
+        <option value="52mm" ${p.vrTablierAlu==='52mm'?'selected':''}>52mm</option>
+      </select>
+    </div>
+
+    <div class="config-row2" style="margin-bottom:6px">
+      <div class="config-step">
+        <label>Coloris tablier</label>
+        <input type="text" id="vr-tablier-col-${id}" value="${p.vrTablierCol||''}" placeholder="Ex: Blanc…" oninput="onVrChange(${id},'vrTablierCol','vr-tablier-col-${id}')" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Couleur lame finale</label>
+        <input type="text" id="vr-lame-${id}" value="${p.vrLameFinale||''}" placeholder="Ex: Gris anthracite…" oninput="onVrChange(${id},'vrLameFinale','vr-lame-${id}')" ${IS}>
+      </div>
+    </div>
+
+    <div id="vr-console-standalone-wrap-${id}" class="config-step" style="${p.vrType==='monobloc' && parseInt(p.largeur)>1800 ? '' : 'display:none'};margin-bottom:6px">
+      <label style="display:flex;align-items:center;gap:6px">Console statique <span style="font-size:9px;color:var(--copper-light);background:rgba(200,120,42,0.15);border:1px solid rgba(200,120,42,0.3);border-radius:4px;padding:1px 6px">Monobloc > 1800mm</span></label>
+      <select id="vr-console-${id}" onchange="onVrChange(${id},'vrConsole','vr-console-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="non" ${p.vrConsole==='non'?'selected':''}>Non</option>
+        <option value="oui" ${p.vrConsole==='oui'?'selected':''}>Oui</option>
+      </select>
+    </div>
+
+    <div class="config-step" style="margin-bottom:6px">
+      <label>Commande</label>
+      <select id="vr-cmd-${id}" onchange="onVrChange(${id},'vrCommande','vr-cmd-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="manuelle"   ${p.vrCommande==='manuelle'  ?'selected':''}>Manuelle</option>
+        <option value="electrique" ${p.vrCommande==='electrique'?'selected':''}>Électrique</option>
+      </select>
+    </div>
+    <div id="vr-manuelle-wrap-${id}" class="config-step" style="${manuelleShow?'':'display:none'};margin-bottom:6px">
+      <label>Type manuelle</label>
+      <select id="vr-manuelle-${id}" onchange="onVrChange(${id},'vrManuelle','vr-manuelle-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="sangle"    ${p.vrManuelle==='sangle'   ?'selected':''}>Sangle</option>
+        <option value="manivelle" ${p.vrManuelle==='manivelle'?'selected':''}>Manivelle</option>
+      </select>
+    </div>
+    <div id="vr-elec-wrap-${id}" style="${elecShow?'':'display:none'}">
+      <div class="config-step" style="margin-bottom:6px">
+        <label>Motorisation</label>
+        <select id="vr-elec-${id}" onchange="onVrChange(${id},'vrElec','vr-elec-${id}')">
+          <option value="">— Choisir —</option>
+          <option value="somfy" ${p.vrElec==='somfy'?'selected':''}>Somfy</option>
+          <option value="basic" ${p.vrElec==='basic'?'selected':''}>Basic</option>
+          <option value="autre" ${p.vrElec==='autre'?'selected':''}>Autre</option>
+        </select>
+      </div>
+      <div id="vr-somfy-wrap-${id}" class="config-step" style="${somfyShow?'':'display:none'};margin-bottom:6px">
+        <label>Somfy</label>
+        <select id="vr-somfy-${id}" onchange="onVrChange(${id},'vrSomfy','vr-somfy-${id}')">
+          <option value="">— Choisir —</option>
+          <option value="filaire"  ${p.vrSomfy==='filaire' ?'selected':''}>Filaire</option>
+          <option value="sans-fil" ${p.vrSomfy==='sans-fil'?'selected':''}>Sans fil</option>
+        </select>
+      </div>
+      <div id="vr-elec-lib-wrap-${id}" class="config-step" style="${elecLibShow?'':'display:none'};margin-bottom:6px">
+        <label>Motorisation (saisie libre)</label>
+        <input type="text" id="vr-elec-lib-${id}" value="${p.vrElecLib||''}" placeholder="Marque / référence…" oninput="onVrChange(${id},'vrElecLib','vr-elec-lib-${id}')" ${IS}>
+      </div>
+    </div>
+
+    <div class="config-step">
+      <label>Moustiquaire intégrée</label>
+      <select id="vr-moust-${id}" onchange="onVrChange(${id},'vrMoust','vr-moust-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="non" ${p.vrMoust==='non'?'selected':''}>Non</option>
+        <option value="oui" ${p.vrMoust==='oui'?'selected':''}>Oui</option>
+      </select>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// PORTE DE GARAGE — CONFIGURATEUR
+// ══════════════════════════════════════════════
+function onPgChange(id, field, elId) {
+  const p = produits.find(x=>x.id===id);
+  const el = document.getElementById(elId);
+  if(el) p[field] = el.value;
+
+  // Refresh conditional blocks
+  const secBlock  = document.getElementById(`pg-sec-block-${id}`);
+  const batBlock  = document.getElementById(`pg-bat-block-${id}`);
+  if(secBlock) secBlock.style.display = p.pgType === 'sectionnelle' ? 'block' : 'none';
+  if(batBlock) batBlock.style.display = p.pgType === 'battante'     ? 'block' : 'none';
+
+  const elecBlock = document.getElementById(`pg-elec-block-${id}`);
+  if(elecBlock) elecBlock.style.display = p.pgCommande === 'electrique' ? 'block' : 'none';
+
+  const somfyBlock = document.getElementById(`pg-somfy-block-${id}`);
+  const autreBlock = document.getElementById(`pg-moteur-libre-block-${id}`);
+  if(somfyBlock) somfyBlock.style.display = p.pgMoteur === 'somfy'  ? 'block' : 'none';
+  if(autreBlock) autreBlock.style.display = p.pgMoteur === 'autre'  ? 'block' : 'none';
+
+  buildPgDesignation(id);
+}
+
+function buildPgDesignation(id) {
+  const p = produits.find(x=>x.id===id);
+  if(p.pgType === 'battante') {
+    p.designation = p.pgBattanteLib ? `Porte de garage Battante — ${p.pgBattanteLib}` : 'Porte de garage Battante';
+  } else if(p.pgType === 'sectionnelle') {
+    const parts = ['Porte de garage Sectionnelle'];
+    if(p.pgModele) parts.push(`Infinity ${p.pgModele}`);
+    if(p.pgLargeur && p.pgHauteur) parts.push(`${p.pgLargeur}×${p.pgHauteur}mm`);
+    if(p.pgColoris) parts.push(p.pgColoris);
+    if(p.pgSurface === 'lisse') parts.push('Lisse');
+    else if(p.pgSurface === 'woodgrain') parts.push('Woodgrain');
+    if(p.pgNervures === 'etroites') parts.push('Nervures étroites');
+    else if(p.pgNervures === 'larges') parts.push('Nervures larges');
+    else if(p.pgNervures === 'sans') parts.push('Sans nervures');
+    if(p.pgCommande === 'manuel') parts.push('Manuel');
+    else if(p.pgCommande === 'electrique') {
+      if(p.pgMoteur === 'somfy' && p.pgSomfy) {
+        const somfyLabel = p.pgSomfy === 'dexxo-compact' ? 'Somfy Dexxo Compact IO 750N' : 'Somfy Dexxo Smart IO';
+        parts.push(somfyLabel);
+      } else if(p.pgMoteur === 'autre' && p.pgMoteurLib) {
+        parts.push(p.pgMoteurLib);
+      } else {
+        parts.push('Électrique');
+      }
+    }
+    p.designation = parts.join(' — ');
+  } else {
+    p.designation = '';
+  }
+  if(p.notesProduit) p.designation += (p.designation ? '\n' : '') + p.notesProduit;
+  const box = document.getElementById(`desig-${id}`);
+  if(box) {
+    if(p.designation) { box.textContent = p.designation; box.className = 'designation-box'; }
+    else { box.textContent = 'La désignation apparaîtra ici au fur et à mesure de votre sélection…'; box.className = 'designation-box empty'; }
+  }
+  const sub = document.querySelector(`#card-${id} .card-subtitle`);
+  if(sub) sub.textContent = p.designation || 'Configuration en cours…';
+  updatePreview();
+}
+
+function garageConfigHTML(p) {
+  const id = p.id;
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit"`;
+  const isSec = p.pgType === 'sectionnelle';
+  const isBat = p.pgType === 'battante';
+  const isElec = p.pgCommande === 'electrique';
+  const isSomfy = p.pgMoteur === 'somfy';
+  const isAutreMoteur = p.pgMoteur === 'autre';
+
+  return `
+    <div class="config-step" style="margin-bottom:8px">
+      <label>① Type</label>
+      <select id="pg-type-${id}" onchange="onPgChange(${id},'pgType','pg-type-${id}')">
+        <option value="">— Choisir —</option>
+        <option value="sectionnelle" ${p.pgType==='sectionnelle'?'selected':''}>Sectionnelle</option>
+        <option value="battante"     ${p.pgType==='battante'    ?'selected':''}>Battante</option>
+      </select>
+    </div>
+
+    <div id="pg-bat-block-${id}" style="${isBat?'':'display:none'}">
+      <div class="config-step">
+        <label>Description (saisie libre)</label>
+        <input type="text" id="pg-bat-lib-${id}" value="${p.pgBattanteLib||''}" placeholder="Ex: 2 vantaux, acier galvanisé, RAL 9016…" oninput="onPgChange(${id},'pgBattanteLib','pg-bat-lib-${id}')" ${IS}>
+      </div>
+    </div>
+
+    <div id="pg-sec-block-${id}" style="${isSec?'':'display:none'}">
+      <div class="config-step" style="margin-bottom:8px">
+        <label>② Modèle</label>
+        <select id="pg-modele-${id}" onchange="onPgChange(${id},'pgModele','pg-modele-${id}')">
+          <option value="">— Choisir —</option>
+          <option value="X" ${p.pgModele==='X'?'selected':''}>Infinity X — Ressorts traction verticaux</option>
+          <option value="F" ${p.pgModele==='F'?'selected':''}>Infinity F — Ressorts traction avant</option>
+          <option value="R" ${p.pgModele==='R'?'selected':''}>Infinity R — Ressorts traction arrière</option>
+        </select>
+      </div>
+
+      <div class="cascade-sep" style="margin:8px 0"></div>
+      <div class="config-row2" style="margin-bottom:8px">
+        <div class="config-step">
+          <label>Largeur (mm)</label>
+          <input type="number" id="pg-larg-${id}" value="${p.pgLargeur||''}" placeholder="ex: 2500" oninput="onPgChange(${id},'pgLargeur','pg-larg-${id}')" ${IS}>
+        </div>
+        <div class="config-step">
+          <label>Hauteur (mm)</label>
+          <input type="number" id="pg-haut-${id}" value="${p.pgHauteur||''}" placeholder="ex: 2125" oninput="onPgChange(${id},'pgHauteur','pg-haut-${id}')" ${IS}>
+        </div>
+      </div>
+
+      <div class="config-step" style="margin-bottom:8px">
+        <label>Coloris</label>
+        <input type="text" id="pg-coloris-${id}" value="${p.pgColoris||''}" placeholder="Ex: RAL 9016, Woodgrain anthracite…" oninput="onPgChange(${id},'pgColoris','pg-coloris-${id}')" ${IS}>
+      </div>
+
+      <div class="config-row2" style="margin-bottom:8px">
+        <div class="config-step">
+          <label>Surface panneaux</label>
+          <select id="pg-surface-${id}" onchange="onPgChange(${id},'pgSurface','pg-surface-${id}')">
+            <option value="">— Choisir —</option>
+            <option value="lisse"    ${p.pgSurface==='lisse'    ?'selected':''}>Lisse</option>
+            <option value="woodgrain"${p.pgSurface==='woodgrain'?'selected':''}>Woodgrain</option>
+          </select>
+        </div>
+        <div class="config-step">
+          <label>Nervures</label>
+          <select id="pg-nervures-${id}" onchange="onPgChange(${id},'pgNervures','pg-nervures-${id}')">
+            <option value="">— Choisir —</option>
+            <option value="etroites" ${p.pgNervures==='etroites'?'selected':''}>Étroites</option>
+            <option value="larges"   ${p.pgNervures==='larges'  ?'selected':''}>Larges</option>
+            <option value="sans"     ${p.pgNervures==='sans'    ?'selected':''}>Sans nervures</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="cascade-sep" style="margin:8px 0"></div>
+      <div class="config-step" style="margin-bottom:8px">
+        <label>Commande</label>
+        <select id="pg-cmd-${id}" onchange="onPgChange(${id},'pgCommande','pg-cmd-${id}')">
+          <option value="">— Choisir —</option>
+          <option value="manuel"     ${p.pgCommande==='manuel'    ?'selected':''}>Manuel</option>
+          <option value="electrique" ${p.pgCommande==='electrique'?'selected':''}>Électrique</option>
+        </select>
+      </div>
+
+      <div id="pg-elec-block-${id}" style="${isElec?'':'display:none'}">
+        <div class="config-step" style="margin-bottom:8px">
+          <label>Motorisation</label>
+          <select id="pg-moteur-${id}" onchange="onPgChange(${id},'pgMoteur','pg-moteur-${id}')">
+            <option value="">— Choisir —</option>
+            <option value="somfy" ${p.pgMoteur==='somfy'?'selected':''}>Somfy</option>
+            <option value="autre" ${p.pgMoteur==='autre'?'selected':''}>Autre</option>
+          </select>
+        </div>
+        <div id="pg-somfy-block-${id}" style="${isSomfy?'':'display:none'}" class="config-step" style="margin-bottom:8px">
+          <label>Modèle Somfy</label>
+          <select id="pg-somfy-${id}" onchange="onPgChange(${id},'pgSomfy','pg-somfy-${id}')">
+            <option value="">— Choisir —</option>
+            <option value="dexxo-compact" ${p.pgSomfy==='dexxo-compact'?'selected':''}>Dexxo Compact IO 750N</option>
+            <option value="dexxo-smart"   ${p.pgSomfy==='dexxo-smart'  ?'selected':''}>Dexxo Smart IO</option>
+          </select>
+        </div>
+        <div id="pg-moteur-libre-block-${id}" style="${isAutreMoteur?'':'display:none'}" class="config-step">
+          <label>Motorisation (saisie libre)</label>
+          <input type="text" id="pg-moteur-lib-${id}" value="${p.pgMoteurLib||''}" placeholder="Marque / référence…" oninput="onPgChange(${id},'pgMoteurLib','pg-moteur-lib-${id}')" ${IS}>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// PHOTOS PRODUIT
+// ══════════════════════════════════════════════
+function handlePhotoUpload(id, field, input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const p = produits.find(x=>x.id===id);
+    if(!p) return;
+    p[field] = e.target.result; // data URL complet
+    // Refresh preview thumbnail
+    const preview = document.getElementById(`photo-preview-${field}-${id}`);
+    const zone    = document.getElementById(`photo-zone-${field}-${id}`);
+    if(preview) { preview.src = e.target.result; preview.style.display='block'; }
+    if(zone)    { zone.querySelector('.photo-placeholder')?.style && (zone.querySelector('.photo-placeholder').style.display='none'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(id, field) {
+  const p = produits.find(x=>x.id===id);
+  if(!p) return;
+  p[field] = '';
+  const preview = document.getElementById(`photo-preview-${field}-${id}`);
+  const zone    = document.getElementById(`photo-zone-${field}-${id}`);
+  if(preview) { preview.src=''; preview.style.display='none'; }
+  if(zone)    { const ph = zone.querySelector('.photo-placeholder'); if(ph) ph.style.display='flex'; }
+}
+
+function onNotesProduitChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.notesProduit = document.getElementById(`notes-produit-${id}`)?.value || '';
+  updateDesignation(id);
+}
+
 function onAutreDesigChange(id) {
   const p=produits.find(x=>x.id===id);
   const el=document.getElementById(`autre-desig-${id}`); if(el) p.autreDesig=el.value;
@@ -1121,11 +1816,18 @@ function onDimChange(id) {
   const h = document.getElementById(`haut-${id}`);
   if(l) p.largeur = l.value;
   if(h) p.hauteur = h.value;
-  // Afficher/masquer la console statique selon la largeur
+  // Console intégrée fenêtres/PF (vrOui=oui, largeur > 1800)
   const consoleWrap = document.getElementById(`vr-console-wrap-${id}`);
   if(consoleWrap) {
     const show = parseInt(p.largeur) > 1800;
     consoleWrap.style.display = show ? 'block' : 'none';
+    if(!show) p.vrConsole = '';
+  }
+  // Console volet standalone (monobloc > 1800)
+  const consoleStandalone = document.getElementById(`vr-console-standalone-wrap-${id}`);
+  if(consoleStandalone) {
+    const show = p.vrType === 'monobloc' && parseInt(p.largeur) > 1800;
+    consoleStandalone.style.display = show ? 'block' : 'none';
     if(!show) p.vrConsole = '';
   }
   updateDesignation(id);
@@ -1169,7 +1871,8 @@ function refreshCascade(id) {
   }
 
   // Coloris : visible uniquement si PVC
-  const colorisWrap = document.getElementById(`coloris-wrap-${id}`);
+  const colorisWrapId = p.type === 'porte-entree' ? `coloris-wrap-pe-${id}` : `coloris-wrap-${id}`;
+  const colorisWrap = document.getElementById(colorisWrapId);
   if(colorisWrap) colorisWrap.style.display = p.matiere === 'PVC' ? 'block' : 'none';
 }
 
@@ -1242,8 +1945,12 @@ function refreshGamme(id) {
 function updateDesignation(id) {
   const p = produits.find(x=>x.id===id);
   const cat = CATALOGUE[p.type];
+  // Garage : désignation gérée par buildPgDesignation
+  if(p.type === 'garage') { buildPgDesignation(id); return; }
   const parts = [];
   if(p.matiere) parts.push(p.matiere);
+  // PSK : Oscillo-battant juste après la matière
+  if(p.type === 'baie-psk') parts.push('Oscillo-battant');
   // Fabricant
   if(p.fabricant) {
     const mat = cat.matieres[p.matiere];
@@ -1282,9 +1989,20 @@ function updateDesignation(id) {
   p.designation = parts.length > 0 ? `${cat.label} ${parts.join(' — ')}` : '';
   // Pièce d'appui
   if(p.pieceAppui === 'oui') p.designation += ' — Pièce d\'appui';
-  // Volet roulant intégré
+  // Volet roulant standalone
+  if(p.type === 'volet') {
+    const vrSLabel = buildVrStandaloneLabel(p);
+    if(vrSLabel) p.designation += (p.designation ? ' — ' : '') + vrSLabel;
+  }
   const vrLabel = buildVrLabel(p);
   if(vrLabel) p.designation += '\n' + vrLabel;
+  // Volet roulant porte d'entrée (simplifié)
+  if(p.type === 'porte-entree' && p.peVr === 'oui') {
+    const peVrStr = p.peVrLib ? `Volet roulant — ${p.peVrLib}` : 'Volet roulant';
+    p.designation += '\n' + peVrStr;
+  }
+  // Note libre produit
+  if(p.notesProduit) p.designation += '\n' + p.notesProduit;
 
   const box = document.getElementById(`desig-${id}`);
   if(box) {
@@ -1545,6 +2263,112 @@ function pieceAppuiVrHTML(p) {
 }
 
 // ══════════════════════════════════════════════
+// PORTE D'ENTRÉE CONFIG HTML
+// ══════════════════════════════════════════════
+function porteEntreeFullHTML(p) {
+  const id = p.id;
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit"`;
+  const colExt = PALETTE_ALUPLAST.map(c => `<option value="${c.code}" ${p.colorisExt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('');
+  const colInt = PALETTE_ALUPLAST.map(c => `<option value="${c.code}" ${p.colorisInt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('');
+  const showColExt = ['plax-ext','plax-2f','bicolore'].includes(p.colorisMode);
+  const showColInt = ['plax-int','bicolore'].includes(p.colorisMode);
+
+  return `
+    <div id="coloris-wrap-pe-${id}" style="${p.matiere==='PVC'?'':'display:none'}">
+      <div class="cascade-sep" style="margin-top:10px"></div>
+      <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">Coloris</div>
+      <div class="config-step">
+        <label>Mode de coloris</label>
+        <select id="col-mode-${id}" onchange="onColorisModeChange(${id})">
+          <option value="">— Choisir —</option>
+          <option value="blanc"    ${p.colorisMode==='blanc'   ?'selected':''}>Blanc (base)</option>
+          <option value="plax-ext" ${p.colorisMode==='plax-ext'?'selected':''}>Plaxage extérieur / intérieur blanc</option>
+          <option value="plax-int" ${p.colorisMode==='plax-int'?'selected':''}>Plaxage intérieur / extérieur blanc</option>
+          <option value="plax-2f"  ${p.colorisMode==='plax-2f' ?'selected':''}>Plaxage 2 faces (même couleur)</option>
+          <option value="bicolore" ${p.colorisMode==='bicolore'?'selected':''}>Bicolore (int ≠ ext)</option>
+        </select>
+      </div>
+      <div id="col-ext-wrap-${id}" class="config-step" style="${showColExt?'':'display:none'}">
+        <label id="col-ext-lbl-${id}">${p.colorisMode==='plax-2f'?'Couleur (2 faces)':'Couleur extérieure'}</label>
+        <select id="col-ext-${id}" onchange="onColorisExtChange(${id})">
+          <option value="">— Choisir dans la palette —</option>${colExt}
+        </select>
+      </div>
+      <div id="col-int-wrap-${id}" class="config-step" style="${showColInt?'':'display:none'}">
+        <label>Couleur intérieure</label>
+        <select id="col-int-${id}" onchange="onColorisIntChange(${id})">
+          <option value="">— Choisir dans la palette —</option>${colInt}
+        </select>
+      </div>
+    </div>
+    ${porteEntreeConfigHTML(p)}
+    <div class="cascade-sep" style="margin-top:10px"></div>
+    <div class="config-row2" style="margin-top:8px">
+      <div class="config-step">
+        <label>Largeur (mm)</label>
+        <input type="number" id="larg-${id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${id})" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Hauteur (mm)</label>
+        <input type="number" id="haut-${id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${id})" ${IS}>
+      </div>
+    </div>
+    <div class="cascade-sep" style="margin-top:10px"></div>
+    <div class="config-row2" style="margin-top:8px">
+      <div class="config-step">
+        <label>Volet roulant</label>
+        <select id="pe-vr-${id}" onchange="onPeVrChange(${id})">
+          <option value="">— Choisir —</option>
+          <option value="non" ${p.peVr==='non'?'selected':''}>Non</option>
+          <option value="oui" ${p.peVr==='oui'?'selected':''}>Oui</option>
+        </select>
+      </div>
+    </div>
+    <div class="config-step" id="pe-vr-lib-wrap-${id}" style="${p.peVr==='oui'?'':'display:none'};margin-top:6px">
+      <label>Volet roulant — Description</label>
+      <input type="text" id="pe-vr-lib-${id}" value="${p.peVrLib||''}" placeholder="Ex: Alu 52mm, Somfy radio, Anthracite…" oninput="onPeVrLibChange(${id})" ${IS}>
+    </div>`;
+}
+
+function porteEntreeConfigHTML(p) {
+  const id = p.id;
+  const IS = `style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit"`;
+  const ouv = PE_OUVERTURES.map(o =>
+    `<option value="${o.val}" ${p.peOuverture===o.val?'selected':''}>${o.lbl}</option>`
+  ).join('');
+  const isSpecial = p.peOuverture === 'special';
+  // Init elems si besoin
+  if(p.peOuverture && p.peOuverture !== 'special') initPeElems(p);
+  return `
+    <div class="cascade-sep"></div>
+    <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin:8px 0 6px">④ Configuration</div>
+    <div class="config-row2" style="margin-bottom:6px">
+      <div class="config-step">
+        <label>Sens d'ouverture</label>
+        <select id="pe-sens-${id}" onchange="onPeSensChange(${id})">
+          <option value="">— Choisir —</option>
+          <option value="interieur"  ${p.peSens==='interieur' ?'selected':''}>Vers l'intérieur</option>
+          <option value="exterieur"  ${p.peSens==='exterieur' ?'selected':''}>Vers l'extérieur</option>
+        </select>
+      </div>
+      <div class="config-step">
+        <label>Type d'ouverture</label>
+        <select id="pe-ouv-${id}" onchange="onPeOuvertureChange(${id})">
+          <option value="">— Choisir —</option>
+          ${ouv}
+        </select>
+      </div>
+    </div>
+    <div class="config-step" id="pe-special-wrap-${id}" style="${isSpecial?'':'display:none'}">
+      <label>Ouverture spéciale (saisie libre)</label>
+      <input type="text" id="pe-special-${id}" value="${p.peSpecial||''}" placeholder="Décrivez l'ouverture…" oninput="onPeSpecialChange(${id})" ${IS}>
+    </div>
+    <div id="pe-elems-zone-${id}" style="margin-top:8px">
+      ${peElemsHTML(p)}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
 // VITRAGE CONFIG HTML (généré dans le template)
 // ══════════════════════════════════════════════
 function vitrageConfigHTML(p) {
@@ -1651,6 +2475,258 @@ function vitrageConfigHTML(p) {
     </div>`;
 }
 
+// ══════════════════════════════════════════════
+// CONFIG TAB HTML — branches extraites pour éviter l'imbrication de backticks
+// ══════════════════════════════════════════════
+function autreConfigHTML(p, IS, desigContent, desigClass) {
+  const id = p.id;
+  return `
+  <div class="config-cascade">
+    <div style="font-size:10px;color:var(--copper-light);margin-bottom:10px;display:flex;align-items:center;gap:7px;">
+      <span class="autre-badge">SAISIE LIBRE</span>
+      <span style="color:var(--text-muted)">Remplissez les champs selon vos besoins</span>
+    </div>
+    <div class="config-step">
+      <label>Désignation complète</label>
+      <input type="text" id="autre-desig-${id}" value="${p.autreDesig||''}" placeholder="Ex : Store banne motorisé, Claustra aluminium…" oninput="onAutreDesigChange(${id})" ${IS}>
+    </div>
+    <div class="config-row2" style="margin-top:6px">
+      <div class="config-step">
+        <label>Matière / Fabricant</label>
+        <input type="text" id="autre-mat-${id}" value="${p.autreMatiere||''}" placeholder="Ex : Aluminium, Bois massif…" oninput="onAutreFieldChange(${id})" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Couleur / Finition</label>
+        <input type="text" id="autre-coul-${id}" value="${p.autreCouleur||''}" placeholder="Ex : RAL 7016, Blanc 9016…" oninput="onAutreFieldChange(${id})" ${IS}>
+      </div>
+    </div>
+    <div class="config-row2" style="margin-top:6px">
+      <div class="config-step">
+        <label>Dimensions (L×H mm)</label>
+        <input type="text" id="autre-dim-${id}" value="${p.autreDim||''}" placeholder="Ex : 900×1200" oninput="onAutreFieldChange(${id})" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Référence / Note</label>
+        <input type="text" id="autre-ref-${id}" value="${p.autreRef||''}" placeholder="Référence ou remarque…" oninput="onAutreFieldChange(${id})" ${IS}>
+      </div>
+    </div>
+  </div>
+  <div class="${desigClass}" id="desig-${id}">${desigContent}</div>`;
+}
+
+function standardConfigHTML(p, IS, matOpts, fabHide, fabOpts, gamHide, gamOpts, gamDis, gamLibreHide, fabLibreHide, ouvOpts, ouvDis, desigContent, desigClass) {
+  const id = p.id;
+  const mat = CATALOGUE[p.type]?.matieres[p.matiere];
+  const isFenPF = ['fenetre','porte-fenetre'].includes(p.type);
+  const isFen   = p.type === 'fenetre';
+  const isPF    = p.type === 'porte-fenetre';
+  const isPE    = p.type === 'porte-entree';
+  const isVr    = p.type === 'volet';
+  const isBc    = p.type === 'baie-coul';
+  const isPG    = p.type === 'garage';
+
+  // Porte de garage : configurateur dédié sans matière
+  if(isPG) {
+    return `
+    <div class="config-cascade">
+      ${garageConfigHTML(p)}
+    </div>
+    <div class="${desigClass}" id="desig-${id}">${desigContent}</div>`;
+  }
+
+  // Coloris block (fenêtres, PF, baies — pas PE car géré dans porteEntreeFullHTML)
+  const colExt = PALETTE_ALUPLAST.map(c => `<option value="${c.code}" ${p.colorisExt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('');
+  const colInt = PALETTE_ALUPLAST.map(c => `<option value="${c.code}" ${p.colorisInt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('');
+  const showColExt = ['plax-ext','plax-2f','bicolore'].includes(p.colorisMode);
+  const showColInt = ['plax-int','bicolore'].includes(p.colorisMode);
+
+  const colorisBlock = !isPE ? `
+    <div id="coloris-wrap-${id}" style="${p.matiere==='PVC'?'':'display:none'}">
+      <div class="cascade-sep" style="margin-top:10px"></div>
+      <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">Coloris</div>
+      <div class="config-step">
+        <label>Mode de coloris</label>
+        <select id="col-mode-${id}" onchange="onColorisModeChange(${id})">
+          <option value="">— Choisir —</option>
+          <option value="blanc"    ${p.colorisMode==='blanc'   ?'selected':''}>Blanc (base)</option>
+          <option value="plax-ext" ${p.colorisMode==='plax-ext'?'selected':''}>Plaxage extérieur / intérieur blanc</option>
+          <option value="plax-int" ${p.colorisMode==='plax-int'?'selected':''}>Plaxage intérieur / extérieur blanc</option>
+          <option value="plax-2f"  ${p.colorisMode==='plax-2f' ?'selected':''}>Plaxage 2 faces (même couleur)</option>
+          <option value="bicolore" ${p.colorisMode==='bicolore'?'selected':''}>Bicolore (int ≠ ext)</option>
+        </select>
+      </div>
+      <div id="col-ext-wrap-${id}" class="config-step" style="${showColExt?'':'display:none'}">
+        <label id="col-ext-lbl-${id}">${p.colorisMode==='plax-2f'?'Couleur (2 faces)':'Couleur extérieure'}</label>
+        <select id="col-ext-${id}" onchange="onColorisExtChange(${id})">
+          <option value="">— Choisir dans la palette —</option>${colExt}
+        </select>
+      </div>
+      <div id="col-int-wrap-${id}" class="config-step" style="${showColInt?'':'display:none'}">
+        <label>Couleur intérieure</label>
+        <select id="col-int-${id}" onchange="onColorisIntChange(${id})">
+          <option value="">— Choisir dans la palette —</option>${colInt}
+        </select>
+      </div>
+    </div>` : '';
+
+  // Ouvrants block (fenetre + PF)
+  const seuilBlock = isPF ? `
+    <div class="config-step" style="margin-bottom:8px">
+      <label>Seuil</label>
+      <select id="pf-seuil-${id}" onchange="onPfSeuilChange(${id})">
+        <option value="">— Choisir —</option>
+        <option value="plat-alu"  ${p.pfSeuil==='plat-alu' ?'selected':''}>Plat aluminium</option>
+        <option value="dormant"   ${p.pfSeuil==='dormant'  ?'selected':''}>Dormant fenêtre</option>
+      </select>
+    </div>` : '';
+
+  const ouverturePF_imposte = isPF ? '' : `<option value="allege" ${p.fenImposte==='allege'?'selected':''}>Allège</option>`;
+
+  const ouvantsBlock = isFenPF ? `
+    <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">④ Configuration des ouvrants</div>
+    ${seuilBlock}
+    <div class="config-row3" style="margin-bottom:8px">
+      <div class="config-step">
+        <label>Nb de vantaux</label>
+        <select id="fen-nb-${id}" onchange="onFenNbVantauxChange(${id})">
+          <option value="1" ${p.fenNbVantaux===1?'selected':''}>1 vantail</option>
+          <option value="2" ${p.fenNbVantaux===2?'selected':''}>2 vantaux</option>
+          <option value="3" ${p.fenNbVantaux===3?'selected':''}>3 vantaux</option>
+        </select>
+      </div>
+      <div class="config-step">
+        <label>${isPF?'Imposte':'Imposte / Allège'}</label>
+        <select id="fen-imposte-${id}" onchange="onFenImposteChange(${id})">
+          <option value="" ${!p.fenImposte?'selected':''}>Aucune</option>
+          <option value="imposte" ${p.fenImposte==='imposte'?'selected':''}>Imposte</option>
+          ${ouverturePF_imposte}
+        </select>
+      </div>
+      <div class="config-step" id="fen-imposte-ouv-wrap-${id}" style="${p.fenImposte?'':'display:none'}">
+        <label>Ouverture imposte</label>
+        <select id="fen-imposte-ouv-${id}" onchange="onFenImpostOuvChange(${id})">
+          <option value="" ${!p.fenImpostOuv?'selected':''}>— Choisir —</option>
+          <option value="Fixe" ${p.fenImpostOuv==='Fixe'?'selected':''}>Fixe</option>
+          <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB (oscillo-battant)</option>
+        </select>
+      </div>
+    </div>
+    <div id="fen-vantaux-wrap-${id}" class="${p.fenNbVantaux===1?'config-step':p.fenNbVantaux===2?'config-row2':'config-row3'}">
+      ${p.fenVantaux.map((v,i) => `
+        <div class="config-step">
+          <label>${['V1','V2','V3'][i]}</label>
+          <select id="fen-v-${id}-${i}" onchange="onFenVantailOuvChange(${id},${i})">
+            <option value="">— Ouvrant —</option>
+            <option value="Fixe"  ${v.ouv==='Fixe' ?'selected':''}>Fixe</option>
+            <option value="OF"    ${v.ouv==='OF'   ?'selected':''}>OF (oscillo-battant)</option>
+            <option value="OF+OB" ${v.ouv==='OF+OB'?'selected':''}>OF + OB</option>
+          </select>
+        </div>`).join('')}
+    </div>
+    <div class="cascade-sep" style="margin-top:10px"></div>
+    <div class="config-row2" style="margin-top:8px">
+      <div class="config-step">
+        <label>Largeur (mm)</label>
+        <input type="number" id="larg-${id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${id})" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Hauteur (mm)</label>
+        <input type="number" id="haut-${id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${id})" ${IS}>
+      </div>
+    </div>
+    <div class="cascade-sep" style="margin-top:10px"></div>
+    <div style="margin-top:8px">${vitrageConfigHTML(p)}</div>
+    ${pieceAppuiVrHTML(p)}` : '';
+
+  // Bloc non-fenetre / non-PF / non-PE : configurateurs vantaux BC et autres
+  // Configurateur vantaux baie coulissante
+  const bcVantauxClass = p.bcNbVantaux <= 2 ? 'config-row2' : p.bcNbVantaux === 3 ? 'config-row3' : 'config-row2';
+  const bcVantauxHTML = p.bcVantaux.map((v,i) => `
+    <div class="config-step">
+      <label>V${i+1}</label>
+      <select id="bc-v-${id}-${i}" onchange="onBcVantailChange(${id},${i})">
+        <option value="">— Choisir —</option>
+        <option value="fixe"       ${v.ouv==='fixe'       ?'selected':''}>Fixe</option>
+        <option value="coulissant" ${v.ouv==='coulissant' ?'selected':''}>Coulissant</option>
+      </select>
+    </div>`).join('');
+
+  const bcBlock = isBc ? `
+    <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">④ Configuration des vantaux</div>
+    <div class="config-step" style="margin-bottom:8px">
+      <label>Nombre de vantaux</label>
+      <select id="bc-nb-${id}" onchange="onBcNbVantauxChange(${id})">
+        <option value="1" ${p.bcNbVantaux===1?'selected':''}>1 vantail</option>
+        <option value="2" ${p.bcNbVantaux===2?'selected':''}>2 vantaux</option>
+        <option value="3" ${p.bcNbVantaux===3?'selected':''}>3 vantaux</option>
+        <option value="4" ${p.bcNbVantaux===4?'selected':''}>4 vantaux</option>
+      </select>
+    </div>
+    <div id="bc-vantaux-wrap-${id}" class="${bcVantauxClass}" style="margin-bottom:8px">
+      ${bcVantauxHTML}
+    </div>` : '';
+
+  const ouvertureStdBlock = !isFenPF && !isPE ? `
+    ${isVr ? voletStandaloneHTML(p) : isBc ? bcBlock : `
+    <div class="config-row2">
+      <div class="config-step">
+        <label>④ Ouverture</label>
+        <select id="ouv-${id}" onchange="onOuvertureChange(${id})" ${ouvDis}>
+          <option value="">— Type d'ouverture —</option>${ouvOpts}
+        </select>
+      </div>
+    </div>`}
+    ${!isVr ? `
+    <div class="cascade-sep" style="margin-top:10px"></div>
+    <div class="config-row2" style="margin-top:8px">
+      <div class="config-step">
+        <label>Largeur (mm)</label>
+        <input type="number" id="larg-${id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${id})" ${IS}>
+      </div>
+      <div class="config-step">
+        <label>Hauteur (mm)</label>
+        <input type="number" id="haut-${id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${id})" ${IS}>
+      </div>
+    </div>
+    <div class="cascade-sep" style="margin-top:10px"></div>
+    <div class="config-step" style="margin-top:8px">${vitrageConfigHTML(p)}</div>
+    ${['baie-psk','baie-coul'].includes(p.type) ? pieceAppuiVrHTML(p) : ''}` : ''}` : '';
+
+  return `
+  <div class="config-cascade">
+    <div class="config-step">
+      <label>① Matière</label>
+      <select id="mat-${id}" onchange="onMatiereChange(${id})">
+        <option value="">— Choisir la matière —</option>${matOpts}
+      </select>
+    </div>
+    <div id="fab-wrap-${id}" class="config-step" style="${fabHide}">
+      <label>② Fabricant</label>
+      <select id="fab-${id}" onchange="onFabricantChange(${id})" ${mat&&mat.hasFabricant?'':' disabled'}>
+        ${fabOpts}
+      </select>
+    </div>
+    <div id="fab-libre-wrap-${id}" class="config-step" style="${fabLibreHide}">
+      <label>② Fabricant <span class="autre-badge">saisie libre</span></label>
+      <input type="text" id="fab-libre-${id}" value="${p.fabricantLibre||''}" placeholder="Nom du fabricant…" oninput="onFabricantLibreChange(${id})">
+    </div>
+    <div id="gam-wrap-${id}" class="config-step" style="${gamHide}">
+      <label>③ Gamme / Profilé</label>
+      <select id="gam-${id}" onchange="onGammeChange(${id})" ${gamDis}>${gamOpts}</select>
+    </div>
+    <div id="gam-libre-wrap-${id}" class="config-step" style="${gamLibreHide}">
+      <label>③ Gamme / Profilé <span class="autre-badge">saisie libre</span></label>
+      <input type="text" id="gam-libre-${id}" value="${p.gammeLibre||''}" placeholder="Ex : SOFTLINE 82, EuroFutur Elite…" oninput="onGammeLibreChange(${id})">
+    </div>
+    ${colorisBlock}
+    <div class="cascade-sep"></div>
+    ${ouvantsBlock}
+    ${isPE ? porteEntreeFullHTML(p) : ''}
+    ${ouvertureStdBlock}
+  </div>
+  <div class="${desigClass}" id="desig-${id}">${desigContent}</div>`;
+}
+
 function renderProduits() {
   const container = document.getElementById('produits-container');
   if(!container) return;
@@ -1734,203 +2810,43 @@ function renderProduits() {
 
         <!-- CONFIG -->
         <div id="tab-config-${p.id}">
-          ${p.type === 'autre' ? `
-          <div class="config-cascade">
-            <div style="font-size:10px;color:var(--copper-light);margin-bottom:10px;display:flex;align-items:center;gap:7px;">
-              <span class="autre-badge">SAISIE LIBRE</span>
-              <span style="color:var(--text-muted)">Remplissez les champs selon vos besoins</span>
-            </div>
-            <div class="config-step">
-              <label>Désignation complète</label>
-              <input type="text" id="autre-desig-${p.id}" value="${p.autreDesig||''}" placeholder="Ex : Store banne motorisé, Claustra aluminium…" oninput="onAutreDesigChange(${p.id})" ${IS}>
-            </div>
-            <div class="config-row2" style="margin-top:6px">
-              <div class="config-step">
-                <label>Matière / Fabricant</label>
-                <input type="text" id="autre-mat-${p.id}" value="${p.autreMatiere||''}" placeholder="Ex : Aluminium, Bois massif…" oninput="onAutreFieldChange(${p.id})" ${IS}>
-              </div>
-              <div class="config-step">
-                <label>Couleur / Finition</label>
-                <input type="text" id="autre-coul-${p.id}" value="${p.autreCouleur||''}" placeholder="Ex : RAL 7016, Blanc 9016…" oninput="onAutreFieldChange(${p.id})" ${IS}>
-              </div>
-            </div>
-            <div class="config-row2" style="margin-top:6px">
-              <div class="config-step">
-                <label>Dimensions (L×H mm)</label>
-                <input type="text" id="autre-dim-${p.id}" value="${p.autreDim||''}" placeholder="Ex : 900×1200" oninput="onAutreFieldChange(${p.id})" ${IS}>
-              </div>
-              <div class="config-step">
-                <label>Référence / Note</label>
-                <input type="text" id="autre-ref-${p.id}" value="${p.autreRef||''}" placeholder="Référence ou remarque…" oninput="onAutreFieldChange(${p.id})" ${IS}>
-              </div>
-            </div>
+          ${p.type === 'autre' ? autreConfigHTML(p, IS, desigContent, desigClass) : standardConfigHTML(p, IS, matOpts, fabHide, fabOpts, gamHide, gamOpts, gamDis, gamLibreHide, fabLibreHide, ouvOpts, ouvDis, desigContent, desigClass)}
+          <div class="cascade-sep" style="margin-top:10px"></div>
+          <div class="config-step" style="margin-top:8px">
+            <label style="font-size:9px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase">Note / Spécificités techniques</label>
+            <textarea id="notes-produit-${p.id}" rows="2" placeholder="Ex : Renforts spéciaux, contraintes de pose, remarques…" oninput="onNotesProduitChange(${p.id})" style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;resize:vertical">${p.notesProduit||''}</textarea>
           </div>
-          <div class="${desigClass}" id="desig-${p.id}">${desigContent}</div>
-          ` : `
-          <div class="config-cascade">
-
-            <div class="config-step">
-              <label>① Matière</label>
-              <select id="mat-${p.id}" onchange="onMatiereChange(${p.id})">
-                <option value="">— Choisir la matière —</option>
-                ${matOpts}
-              </select>
-            </div>
-
-            <div id="fab-wrap-${p.id}" class="config-step" style="${fabHide}">
-              <label>② Fabricant</label>
-              <select id="fab-${p.id}" onchange="onFabricantChange(${p.id})" ${mat&&mat.hasFabricant?'':' disabled'}>
-                ${fabOpts}
-              </select>
-            </div>
-
-            <div id="fab-libre-wrap-${p.id}" class="config-step" style="${fabLibreHide}">
-              <label>② Fabricant <span class="autre-badge">saisie libre</span></label>
-              <input type="text" id="fab-libre-${p.id}" value="${p.fabricantLibre||''}" placeholder="Nom du fabricant…" oninput="onFabricantLibreChange(${p.id})">
-            </div>
-
-            <div id="gam-wrap-${p.id}" class="config-step" style="${gamHide}">
-              <label>③ Gamme / Profilé</label>
-              <select id="gam-${p.id}" onchange="onGammeChange(${p.id})" ${gamDis}>
-                ${gamOpts}
-              </select>
-            </div>
-
-            <div id="gam-libre-wrap-${p.id}" class="config-step" style="${gamLibreHide}">
-              <label>③ Gamme / Profilé <span class="autre-badge">saisie libre</span></label>
-              <input type="text" id="gam-libre-${p.id}" value="${p.gammeLibre||''}" placeholder="Ex : SOFTLINE 82, EuroFutur Elite…" oninput="onGammeLibreChange(${p.id})">
-            </div>
-
-            <div class="cascade-sep"></div>
-
-            ${p.type === 'fenetre' ? `
-            <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">④ Configuration des ouvrants</div>
-
-            <div class="config-row3" style="margin-bottom:8px">
-              <div class="config-step">
-                <label>Nb de vantaux</label>
-                <select id="fen-nb-${p.id}" onchange="onFenNbVantauxChange(${p.id})">
-                  <option value="1" ${p.fenNbVantaux===1?'selected':''}>1 vantail</option>
-                  <option value="2" ${p.fenNbVantaux===2?'selected':''}>2 vantaux</option>
-                  <option value="3" ${p.fenNbVantaux===3?'selected':''}>3 vantaux</option>
-                </select>
-              </div>
-              <div class="config-step">
-                <label>Imposte / Allège</label>
-                <select id="fen-imposte-${p.id}" onchange="onFenImposteChange(${p.id})">
-                  <option value="" ${!p.fenImposte?'selected':''}>Aucune</option>
-                  <option value="imposte" ${p.fenImposte==='imposte'?'selected':''}>Imposte</option>
-                  <option value="allege"  ${p.fenImposte==='allege'?'selected':''}>Allège</option>
-                </select>
-              </div>
-              <div class="config-step" id="fen-imposte-ouv-wrap-${p.id}" style="${p.fenImposte?'':'display:none'}">
-                <label>${p.fenImposte==='allege'?'Ouverture allège':'Ouverture imposte'}</label>
-                <select id="fen-imposte-ouv-${p.id}" onchange="onFenImpostOuvChange(${p.id})">
-                  <option value="" ${!p.fenImpostOuv?'selected':''}>— Choisir —</option>
-                  <option value="Fixe" ${p.fenImpostOuv==='Fixe'?'selected':''}>Fixe</option>
-                  <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB (oscillo-battant)</option>
-                </select>
-              </div>
-            </div>
-
-            <div id="fen-vantaux-wrap-${p.id}" class="${p.fenNbVantaux===1?'config-step':p.fenNbVantaux===2?'config-row2':'config-row3'}">
-              ${p.fenVantaux.map((v,i)=>`
-                <div class="config-step">
-                  <label>${['V1','V2','V3'][i]}</label>
-                  <select id="fen-v-${p.id}-${i}" onchange="onFenVantailOuvChange(${p.id},${i})">
-                    <option value="">— Ouvrant —</option>
-                    <option value="Fixe"  ${v.ouv==='Fixe'?'selected':''}>Fixe</option>
-                    <option value="OF"    ${v.ouv==='OF'?'selected':''}>OF (oscillo-battant)</option>
-                    <option value="OF+OB" ${v.ouv==='OF+OB'?'selected':''}>OF + OB</option>
-                  </select>
-                </div>`).join('')}
-            </div>
-
-            <div class="cascade-sep" style="margin-top:10px"></div>
-            <div class="config-row2" style="margin-top:8px">
-              <div class="config-step">
-                <label>Largeur (mm)</label>
-                <input type="number" id="larg-${p.id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${p.id})" ${IS}>
-              </div>
-              <div class="config-step">
-                <label>Hauteur (mm)</label>
-                <input type="number" id="haut-${p.id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${p.id})" ${IS}>
-              </div>
-            </div>
-
-            <div class="cascade-sep" style="margin-top:10px"></div>
-            <div style="margin-top:8px">
-              ${vitrageConfigHTML(p)}
-            </div>
-            ${pieceAppuiVrHTML(p)}
-            ` : `
-            <div class="config-row2">
-              <div class="config-step">
-                <label>④ Ouverture</label>
-                <select id="ouv-${p.id}" onchange="onOuvertureChange(${p.id})" ${ouvDis}>
-                  ${ouvOpts}
-                </select>
-              </div>
-            </div>
-
-            <div class="cascade-sep" style="margin-top:10px"></div>
-            <div class="config-row2" style="margin-top:8px">
-              <div class="config-step">
-                <label>Largeur (mm)</label>
-                <input type="number" id="larg-${p.id}" value="${p.largeur}" placeholder="ex: 900" oninput="onDimChange(${p.id})" ${IS}>
-              </div>
-              <div class="config-step">
-                <label>Hauteur (mm)</label>
-                <input type="number" id="haut-${p.id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${p.id})" ${IS}>
-              </div>
-            </div>
-
-            <div class="cascade-sep" style="margin-top:10px"></div>
-            <div class="config-step" style="margin-top:8px">
-              ${vitrageConfigHTML(p)}
-            </div>
-            ${['fenetre','porte-fenetre','baie-psk','baie-coul'].includes(p.type) ? pieceAppuiVrHTML(p) : ''}
-            `}
-
-            <div id="coloris-wrap-${p.id}" style="${p.matiere==='PVC'?'':'display:none'}">
-            <div class="cascade-sep" style="margin-top:10px"></div>
-            <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">Coloris</div>
-            <div class="config-step">
-              <label>Mode de coloris</label>
-              <select id="col-mode-${p.id}" onchange="onColorisModeChange(${p.id})">
-                <option value="">— Choisir —</option>
-                <option value="blanc"    ${p.colorisMode==='blanc'   ?'selected':''}>Blanc (base)</option>
-                <option value="plax-ext" ${p.colorisMode==='plax-ext'?'selected':''}>Plaxage extérieur / intérieur blanc</option>
-                <option value="plax-int" ${p.colorisMode==='plax-int'?'selected':''}>Plaxage intérieur / extérieur blanc</option>
-                <option value="plax-2f"  ${p.colorisMode==='plax-2f' ?'selected':''}>Plaxage 2 faces (même couleur)</option>
-                <option value="bicolore" ${p.colorisMode==='bicolore'?'selected':''}>Bicolore (int ≠ ext)</option>
-              </select>
-            </div>
-            <div id="col-ext-wrap-${p.id}" class="config-step" style="${['plax-ext','plax-2f','bicolore'].includes(p.colorisMode)?'':'display:none'}">
-              <label id="col-ext-lbl-${p.id}">${p.colorisMode==='plax-2f'?'Couleur (2 faces)':'Couleur extérieure'}</label>
-              <select id="col-ext-${p.id}" onchange="onColorisExtChange(${p.id})">
-                <option value="">— Choisir dans la palette —</option>
-                ${PALETTE_ALUPLAST.map(c=>`<option value="${c.code}" ${p.colorisExt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('')}
-              </select>
-            </div>
-            <div id="col-int-wrap-${p.id}" class="config-step" style="${['plax-int','bicolore'].includes(p.colorisMode)?'':'display:none'}">
-              <label>Couleur intérieure</label>
-              <select id="col-int-${p.id}" onchange="onColorisIntChange(${p.id})">
-                <option value="">— Choisir dans la palette —</option>
-                ${PALETTE_ALUPLAST.map(c=>`<option value="${c.code}" ${p.colorisInt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('')}
-              </select>
-            </div>
-            </div>
-          </div>
-
-          <div class="${desigClass}" id="desig-${p.id}">${desigContent}</div>
-          `}
+        </div>
         </div>
 
         <!-- DESSIN -->
         <div id="tab-dessin-${p.id}" style="display:none">
-          <div class="drawing-container" id="svg-container-${p.id}">${svgHtml}</div>
-          ${!p.largeur||!p.hauteur?'<div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:4px">Entrez les dimensions dans "Configuration" pour voir le dessin</div>':''}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0">
+            <div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Vue intérieure</div>
+              <div class="photo-zone" id="photo-zone-photoInt-${p.id}" onclick="document.getElementById('photo-input-photoInt-${p.id}').click()">
+                <input type="file" id="photo-input-photoInt-${p.id}" accept="image/*" style="display:none" onchange="handlePhotoUpload(${p.id},'photoInt',this)">
+                <img id="photo-preview-photoInt-${p.id}" src="${p.photoInt||''}" style="width:100%;height:100%;object-fit:cover;${p.photoInt?'':'display:none'}">
+                <div class="photo-placeholder" style="${p.photoInt?'display:none':''}">
+                  <span class="icon">📷</span>
+                  <span>Cliquer pour ajouter</span>
+                </div>
+                ${p.photoInt?`<button class="photo-remove" onclick="event.stopPropagation();removePhoto(${p.id},'photoInt')">✕</button>`:''}
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Vue extérieure</div>
+              <div class="photo-zone" id="photo-zone-photoExt-${p.id}" onclick="document.getElementById('photo-input-photoExt-${p.id}').click()">
+                <input type="file" id="photo-input-photoExt-${p.id}" accept="image/*" style="display:none" onchange="handlePhotoUpload(${p.id},'photoExt',this)">
+                <img id="photo-preview-photoExt-${p.id}" src="${p.photoExt||''}" style="width:100%;height:100%;object-fit:cover;${p.photoExt?'':'display:none'}">
+                <div class="photo-placeholder" style="${p.photoExt?'display:none':''}">
+                  <span class="icon">📷</span>
+                  <span>Cliquer pour ajouter</span>
+                </div>
+                ${p.photoExt?`<button class="photo-remove" onclick="event.stopPropagation();removePhoto(${p.id},'photoExt')">✕</button>`:''}
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- PRIX -->
@@ -2094,59 +3010,109 @@ function genererPDF() {
   if(adresse) doc.text(`Chantier : ${adresse}`,W-m-4,y+14.5,{align:'right'});
   y+=24;
 
-  // Tableau
+  // En-tête section produits
   doc.setFillColor(...navy); doc.rect(m,y,W-m*2,7,'F');
   doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
-  const hCols = [
-    { x:m+2,          txt:'Réf.',        align:'left'  },
-    { x:m+16,         txt:'Désignation', align:'left'  },
-    { x:m+96+10,      txt:'Qté',         align:'right' },
-    { x:m+96+10+24,   txt:'P.U. HT',     align:'right' },
-    { x:m+96+10+48,   txt:'Pose HT',     align:'right' },
-    { x:W-m,          txt:'Total HT',    align:'right' },
-  ];
-  hCols.forEach(c=>doc.text(c.txt, c.x, y+5, {align:c.align}));
+  doc.text('Photos', m+2, y+5);
+  doc.text('Désignation / Descriptif', m+80, y+5);
+  doc.text('Total HT', W-m-2, y+5, {align:'right'});
   y+=7;
 
   const {ht,tva,tvaAmt,ttc}=getTotaux();
   let even=false;
   produits.forEach(p=>{
     const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
-    // Séparer désignation principale et volet roulant (ligne 2)
-    const desigParts = (p.designation||cat.label).split('\n');
-    const desig1 = desigParts[0].substring(0,80);
-    const desig2 = desigParts[1] ? desigParts[1].substring(0,80) : '';
-    const rowH = desig2 ? 12 : 7; // hauteur ligne plus grande si 2 lignes
 
-    if(even){doc.setFillColor(250,248,245);doc.rect(m,y,W-m*2,rowH,'F');}
+    // Hauteur de ligne adaptée : photos si présentes → 40mm, sinon texte seul → auto
+    const hasPhoto = p.photoInt || p.photoExt;
+    const photoW = 36; // largeur de chaque photo
+    const photoGap = 3;
+    const photoColW = hasPhoto ? (photoW*2 + photoGap + 4) : 0;
+    const textX = m + photoColW + (hasPhoto ? 4 : 0);
+    const textW = W - m - textX - 2;
 
-    doc.setFontSize(7);
-    // Réf
-    doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
-    doc.text(p.numero, m+2, y+5);
-    // Désignation ligne 1
-    doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
-    doc.text(desig1, m+16, y+5);
-    // Désignation ligne 2 (volet roulant)
-    if(desig2) {
-      doc.setFontSize(6.5); doc.setTextColor(100,100,100);
-      doc.text(desig2, m+16, y+10);
-      doc.setFontSize(7); doc.setTextColor(...dark);
-    }
-    // Colonnes numériques (centrées sur la hauteur de ligne)
-    const cy2 = desig2 ? y+7 : y+5;
-    const numCols = [
-      { x:m+96+10,    txt:String(p.quantite),              bold:false },
-      { x:m+96+10+24, txt:fmtEur(p.prixUnitaire),          bold:false },
-      { x:m+96+10+48, txt:p.withPose?fmtEur(p.prixPose):'—', bold:false },
-      { x:W-m,        txt:fmtEur(getPrixTotal(p)),          bold:true  },
-    ];
-    numCols.forEach(c=>{
-      doc.setFont('helvetica', c.bold?'bold':'normal');
-      doc.setTextColor(...dark);
-      doc.text(c.txt, c.x, cy2, {align:'right'});
+    // Préparer les lignes de désignation (wrap manuel)
+    const desigLines = (p.designation||cat.label).split('\n');
+    // Calculer hauteur nécessaire pour le texte
+    const lineH = 4.5;
+    const textLines = [];
+    desigLines.forEach(line => {
+      // Split long lines roughly every 55 chars for textW
+      const maxLen = Math.floor(textW / 1.8);
+      if(line.length <= maxLen) { textLines.push(line); }
+      else {
+        const words = line.split(' ');
+        let cur = '';
+        words.forEach(w => {
+          if((cur+' '+w).trim().length > maxLen && cur) { textLines.push(cur.trim()); cur = w; }
+          else cur = (cur+' '+w).trim();
+        });
+        if(cur) textLines.push(cur);
+      }
     });
-    doc.setDrawColor(238,238,238); doc.setLineWidth(0.2); doc.line(m,y+rowH,W-m,y+rowH);
+    // Ajouter prix/qté lines
+    textLines.push('');
+    const prix_line = `Qté: ${p.quantite}   P.U. HT: ${fmtEur(p.prixUnitaire)}${p.withPose?' + Pose: '+fmtEur(p.prixPose):''}   Total: ${fmtEur(getPrixTotal(p))}`;
+    textLines.push(prix_line);
+
+    const textH = textLines.length * lineH + 8;
+    const rowH = Math.max(hasPhoto ? 42 : 0, textH, 20);
+
+    // Fond alterné
+    if(even){ doc.setFillColor(250,248,245); doc.rect(m,y,W-m*2,rowH,'F'); }
+    doc.setDrawColor(238,238,238); doc.setLineWidth(0.3); doc.rect(m,y,W-m*2,rowH,'S');
+
+    // Photos
+    if(hasPhoto) {
+      let px = m+2;
+      const ph = rowH - 4;
+      const pw = Math.min(photoW, (ph*4/3)); // ratio 4:3
+      [p.photoInt, p.photoExt].forEach((photo, i) => {
+        if(photo) {
+          try {
+            // Detect format from data URL
+            const fmt = photo.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+            doc.addImage(photo, fmt, px, y+2, pw, ph);
+          } catch(e) {}
+        } else {
+          // Placeholder gris
+          doc.setFillColor(220,220,220);
+          doc.roundedRect(px, y+2, pw, ph, 2, 2, 'F');
+          doc.setFontSize(5); doc.setTextColor(150,150,150);
+          doc.text(i===0?'Vue int.':'Vue ext.', px+pw/2, y+ph/2+2, {align:'center'});
+        }
+        // Label sous photo
+        doc.setFontSize(5); doc.setTextColor(120,120,120);
+        doc.text(i===0?'Vue int.':'Vue ext.', px+pw/2, y+ph+5, {align:'center'});
+        px += pw + photoGap;
+      });
+    }
+
+    // Réf
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
+    doc.text(p.numero, textX, y+5);
+
+    // Lignes de désignation
+    doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
+    let ty = y+5+lineH;
+    textLines.forEach((line, i) => {
+      if(!line) return;
+      if(i === textLines.length-1) {
+        // Ligne prix en gras
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...navy);
+        doc.text(line, textX, ty);
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...dark);
+      } else {
+        doc.setFontSize(6.5);
+        doc.text(line, textX, ty);
+      }
+      ty += lineH;
+    });
+
+    // Total aligné à droite
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...navy);
+    doc.text(fmtEur(getPrixTotal(p)), W-m-2, y+rowH-3, {align:'right'});
+
     y+=rowH; even=!even;
   });
   y+=4;
