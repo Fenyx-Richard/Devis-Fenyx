@@ -256,7 +256,7 @@ const CATALOGUE = {
         gammes: ["À compléter"],
       },
     },
-    ouvertures: ["Fixe", "Oscillo-battant", "Battant 1 vantail", "Battant 2 vantaux", "Battant 2 vantaux + imposte", "Soufflet"],
+    ouvertures: null, // géré par configurateur vantaux dédié
     vitrages: VIT_STD,
   },
 
@@ -425,6 +425,15 @@ function ajouterProduit(type) {
     matiere:'', fabricant:'', gamme:'', ouverture:'', vitrage:'',
     gammeLibre:'', fabricantLibre:'',
     autreDesig:'', autreMatiere:'', autreCouleur:'', autreDim:'', autreRef:'',
+    // Fenêtre : configurateur vantaux
+    fenNbVantaux: 1,          // 1, 2, 3
+    fenVantaux: [{ouv:''}],   // [{ouv:'fixe'|'of'|'of+ob'}] par vantail
+    fenImposte: '',           // ''|'imposte'|'allege'
+    fenImpostOuv: '',         // 'fixe'|'ob'
+    // Coloris PVC
+    colorisMode: '',          // ''|'blanc'|'plax-ext'|'plax-int'|'plax-2f'|'bicolore'
+    colorisExt: '',           // code AP pour face ext (ou les 2 faces en plax-2f)
+    colorisInt: '',           // code AP pour face int (bicolore)
     largeur:'', hauteur:'',
     designation:'',
     quantite:1, prixUnitaire:0,
@@ -461,6 +470,7 @@ function onMatiereChange(id) {
   p.matiere = document.getElementById(`mat-${id}`).value;
   p.fabricant=''; p.gamme=''; p.ouverture=''; p.vitrage='';
   p.gammeLibre=''; p.fabricantLibre='';
+  p.colorisMode=''; p.colorisExt=''; p.colorisInt='';
   refreshCascade(id);
   updateDesignation(id);
 }
@@ -492,6 +502,310 @@ function onFabricantLibreChange(id) {
   const el = document.getElementById(`fab-libre-${id}`);
   if(el) p.fabricantLibre = el.value;
   updateDesignation(id);
+}
+
+// ══════════════════════════════════════════════
+// FENÊTRE — CONFIGURATEUR VANTAUX
+// ══════════════════════════════════════════════
+function onFenNbVantauxChange(id) {
+  const p = produits.find(x=>x.id===id);
+  const n = parseInt(document.getElementById(`fen-nb-${id}`)?.value||1);
+  p.fenNbVantaux = n;
+  // Ajuster le tableau vantaux
+  while(p.fenVantaux.length < n) p.fenVantaux.push({ouv:''});
+  p.fenVantaux = p.fenVantaux.slice(0, n);
+  renderFenVantaux(id);
+  buildFenDesignation(id);
+}
+
+function onFenImposteChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.fenImposte = document.getElementById(`fen-imposte-${id}`)?.value || '';
+  p.fenImpostOuv = '';
+  renderFenImposteOuv(id);
+  buildFenDesignation(id);
+}
+
+function onFenImpostOuvChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.fenImpostOuv = document.getElementById(`fen-imposte-ouv-${id}`)?.value || '';
+  buildFenDesignation(id);
+}
+
+function onFenVantailOuvChange(id, vi) {
+  const p = produits.find(x=>x.id===id);
+  p.fenVantaux[vi].ouv = document.getElementById(`fen-v-${id}-${vi}`)?.value || '';
+  buildFenDesignation(id);
+  renderSVG(id);
+}
+
+function renderFenVantaux(id) {
+  const p = produits.find(x=>x.id===id);
+  const wrap = document.getElementById(`fen-vantaux-wrap-${id}`);
+  if(!wrap) return;
+  // Met à jour la classe CSS selon le nombre de vantaux
+  wrap.className = p.fenNbVantaux === 1 ? 'config-step'
+                 : p.fenNbVantaux === 2 ? 'config-row2'
+                 : 'config-row3';
+  const labels = ['V1','V2','V3'];
+  wrap.innerHTML = p.fenVantaux.map((v,i) => `
+    <div class="config-step">
+      <label>${labels[i]}</label>
+      <select id="fen-v-${id}-${i}" onchange="onFenVantailOuvChange(${id},${i})">
+        <option value="">— Ouvrant —</option>
+        <option value="Fixe"   ${v.ouv==='Fixe'?'selected':''}>Fixe</option>
+        <option value="OF"     ${v.ouv==='OF'?'selected':''}>OF (oscillo-battant)</option>
+        <option value="OF+OB"  ${v.ouv==='OF+OB'?'selected':''}>OF + OB</option>
+      </select>
+    </div>`).join('');
+}
+
+function renderFenImposteOuv(id) {
+  const p = produits.find(x=>x.id===id);
+  const wrap = document.getElementById(`fen-imposte-ouv-wrap-${id}`);
+  if(!wrap) return;
+  if(!p.fenImposte) { wrap.style.display='none'; return; }
+  const lbl = p.fenImposte === 'imposte' ? 'Ouverture imposte' : 'Ouverture allège';
+  wrap.style.display = 'block';
+  wrap.innerHTML = `
+    <div class="config-step">
+      <label>${lbl}</label>
+      <select id="fen-imposte-ouv-${id}" onchange="onFenImpostOuvChange(${id})">
+        <option value="">— Choisir —</option>
+        <option value="Fixe" ${p.fenImpostOuv==='Fixe'?'selected':''}>Fixe</option>
+        <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB (oscillo-battant)</option>
+      </select>
+    </div>`;
+}
+
+function buildFenDesignation(id) {
+  const p = produits.find(x=>x.id===id);
+  // Partie vantaux
+  const ouvLabels = { 'Fixe':'Fixe', 'OF':'OF', 'OF+OB':'OF+OB' };
+  const vParts = p.fenVantaux.map((v,i) => v.ouv ? `V${i+1}:${v.ouv}` : '').filter(Boolean);
+  let ouvertureStr = '';
+  if(p.fenNbVantaux === 1) {
+    ouvertureStr = p.fenVantaux[0]?.ouv || '';
+  } else {
+    ouvertureStr = `${p.fenNbVantaux} vantaux${vParts.length ? ' ('+vParts.join(', ')+')' : ''}`;
+  }
+  // Imposte/allège
+  let imposteStr = '';
+  if(p.fenImposte) {
+    imposteStr = p.fenImposte === 'imposte' ? 'Imposte' : 'Allège';
+    if(p.fenImpostOuv) imposteStr += ` ${p.fenImpostOuv}`;
+  }
+
+  // Stocker dans p.ouverture pour la désignation commune
+  p.ouverture = [ouvertureStr, imposteStr].filter(Boolean).join(' + ');
+  updateDesignation(id);
+  renderSVG(id);
+}
+
+// ══════════════════════════════════════════════
+// PALETTE PLAXAGE ALUPLAST
+// ══════════════════════════════════════════════
+const PALETTE_ALUPLAST = [
+  {code:'AP 01', nom:'Chêne Spécial'},
+  {code:'AP 02', nom:'Chêne Naturel'},
+  {code:'AP 03', nom:'Mattex Anthracite Grey'},
+  {code:'AP 04', nom:'Mattex Jet Black'},
+  {code:'AP 05', nom:'Acajou'},
+  {code:'AP 06', nom:'Chêne Foncé'},
+  {code:'AP 07', nom:'Mattex Alux DB 703'},
+  {code:'AP 08', nom:'Mattex Basalt Grey'},
+  {code:'AP 11', nom:'Douglas'},
+  {code:'AP 12', nom:'Mattex Umbra Grey'},
+  {code:'AP 14', nom:'Aludec Quartz Grey'},
+  {code:'AP 15', nom:'Oregon III'},
+  {code:'AP 19', nom:'Turner Oak Malt'},
+  {code:'AP 20', nom:'Sheffield Oak Alpine'},
+  {code:'AP 21', nom:'Woodec Sheffield Oak Concrete'},
+  {code:'AP 22', nom:'Woodec Turner Oak Toffee'},
+  {code:'AP 23', nom:'Chêne Doré'},
+  {code:'AP 25', nom:'Palissandre'},
+  {code:'AP 26', nom:'Schwarzbraun'},
+  {code:'AP 27', nom:'Noyer'},
+  {code:'AP 28', nom:'Walnuss Terra'},
+  {code:'AP 29', nom:'Walnuss Amaretto'},
+  {code:'AP 30', nom:'Vert Foncé'},
+  {code:'AP 32', nom:'Rouge Foncé'},
+  {code:'AP 34', nom:'Gris'},
+  {code:'AP 35', nom:'Woodec Turner Oak Walnut'},
+  {code:'AP 36', nom:'Mattex Traffic White (Aludec)'},
+  {code:'AP 37', nom:'Mattex Window Grey (Aludec)'},
+  {code:'AP 39', nom:'Woodec Turner Oak Amber'},
+  {code:'AP 40', nom:'Anthracite'},
+  {code:'AP 41', nom:'Bleu Acier'},
+  {code:'AP 43', nom:'Vert'},
+  {code:'AP 44', nom:'Blanc Structuré'},
+  {code:'AP 47', nom:'Bleu Brillant'},
+  {code:'AP 50', nom:'Crème'},
+  {code:'AP 52', nom:'Bouleau'},
+  {code:'AP 60', nom:'Gris Anthracite Sablé'},
+  {code:'AP 61', nom:'Gris Sablé'},
+  {code:'AP 62', nom:'Gris Basalte Sablé'},
+  {code:'AP 63', nom:'Aluminium Brossé'},
+  {code:'AP 65', nom:'Gris Quartz Sablé'},
+  {code:'AP 69', nom:'Graphite Foncé Sablé'},
+  {code:'AP 70', nom:'Gris Béton'},
+  {code:'AP 71', nom:'Gris Agate'},
+  {code:'AP 75', nom:'Chêne Sheffield Clair'},
+  {code:'AP 79', nom:'Alux DB 703'},
+  {code:'AP 88', nom:'Quartz'},
+  {code:'AP 94', nom:'Chêne Sheffield Gris'},
+  {code:'AP 95', nom:'Winchester'},
+  {code:'AP 102', nom:'Gris Basalte'},
+  {code:'AP 103', nom:'Gris Cendré'},
+  {code:'AP 105', nom:'Trompet'},
+  {code:'AP 106', nom:'Jet Black Mat'},
+  {code:'AP 107', nom:'Silver Alux / Mat Silver'},
+  {code:'AP 108', nom:'Brun Foncé X-Brush'},
+  {code:'AP 109', nom:'Platinum'},
+  {code:'AP 110', nom:'Golden'},
+  {code:'AP 111', nom:'Bleu Acier X-Brush'},
+  {code:'AP 112', nom:'Blanc Sablé'},
+  {code:'AP 113', nom:'Vert Foncé Woodgrain'},
+  {code:'AP 115', nom:'Grey Concrete'},
+  {code:'AP 116', nom:'Brillandweiss'},
+  {code:'AP 121', nom:'Graphite Foncé Structuré'},
+  {code:'AP 122', nom:'Graphite Foncé Sablé Mat'},
+];
+
+function paletteOptions(selected='') {
+  return PALETTE_ALUPLAST.map(c =>
+    `<option value="${c.code}" ${selected===c.code?'selected':''}>${c.code} — ${c.nom}</option>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════
+// COLORIS — HANDLERS
+// ══════════════════════════════════════════════
+function isPVC(p) {
+  return p.matiere === 'PVC';
+}
+
+function onColorisMode(id) {
+  const p = produits.find(x=>x.id===id);
+  p.colorisMode = document.getElementById(`col-mode-${id}`)?.value || '';
+  p.colorisExt = ''; p.colorisInt = '';
+  refreshColorisSelects(id);
+  updateDesignation(id);
+}
+
+function onColorisExt(id) {
+  const p = produits.find(x=>x.id===id);
+  p.colorisExt = document.getElementById(`col-ext-${id}`)?.value || '';
+  updateDesignation(id);
+}
+
+function onColorisInt(id) {
+  const p = produits.find(x=>x.id===id);
+  p.colorisInt = document.getElementById(`col-int-${id}`)?.value || '';
+  updateDesignation(id);
+}
+
+function refreshColorisSelects(id) {
+  const p = produits.find(x=>x.id===id);
+  const extWrap = document.getElementById(`col-ext-wrap-${id}`);
+  const intWrap = document.getElementById(`col-int-wrap-${id}`);
+  if(!extWrap || !intWrap) return;
+
+  const m = p.colorisMode;
+
+  if(!m || m === 'blanc') {
+    extWrap.style.display='none';
+    intWrap.style.display='none';
+    return;
+  }
+
+  // plax-int : la couleur est INTÉRIEURE → on utilise col-int-wrap + colorisInt
+  if(m === 'plax-int') {
+    extWrap.style.display='none';
+    intWrap.style.display='block';
+    intWrap.querySelector('label').textContent = 'Couleur intérieure';
+    const intSel = document.getElementById(`col-int-${id}`);
+    if(intSel) { intSel.innerHTML = '<option value="">— Choisir —</option>' + paletteOptions(p.colorisInt); }
+    return;
+  }
+
+  // plax-ext, plax-2f, bicolore : couleur extérieure dans col-ext-wrap
+  extWrap.style.display='block';
+  const extLabel = m === 'plax-2f' ? 'Couleur (2 faces)'
+                 : m === 'bicolore' ? 'Couleur extérieure'
+                 : 'Couleur extérieure';
+  extWrap.querySelector('label').textContent = extLabel;
+  const extSel = document.getElementById(`col-ext-${id}`);
+  if(extSel) { extSel.innerHTML = '<option value="">— Choisir —</option>' + paletteOptions(p.colorisExt); }
+
+  // bicolore : on affiche aussi la couleur intérieure
+  if(m === 'bicolore') {
+    intWrap.style.display='block';
+    intWrap.querySelector('label').textContent = 'Couleur intérieure';
+    const intSel = document.getElementById(`col-int-${id}`);
+    if(intSel) { intSel.innerHTML = '<option value="">— Choisir —</option>' + paletteOptions(p.colorisInt); }
+  } else {
+    intWrap.style.display='none';
+  }
+}
+
+// ══════════════════════════════════════════════
+// COLORIS PVC
+// ══════════════════════════════════════════════
+function onColorisModeChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.colorisMode = document.getElementById(`col-mode-${id}`)?.value || '';
+  p.colorisExt = ''; p.colorisInt = '';
+  refreshColorisSelects(id);
+  updateDesignation(id);
+}
+
+function onColorisExtChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.colorisExt = document.getElementById(`col-ext-${id}`)?.value || '';
+  updateDesignation(id);
+}
+
+function onColorisIntChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.colorisInt = document.getElementById(`col-int-${id}`)?.value || '';
+  updateDesignation(id);
+}
+
+function refreshColorisSelects(id) {
+  const p = produits.find(x=>x.id===id);
+  const wrapExt = document.getElementById(`col-ext-wrap-${id}`);
+  const wrapInt = document.getElementById(`col-int-wrap-${id}`);
+  const lblExt  = document.getElementById(`col-ext-lbl-${id}`);
+  if(!wrapExt || !wrapInt) return;
+
+  const m = p.colorisMode;
+  // Ext visible pour : plax-ext, plax-2f, bicolore
+  // Int visible pour : plax-int, bicolore
+  const showExt = ['plax-ext','plax-2f','bicolore'].includes(m);
+  const showInt = ['plax-int','bicolore'].includes(m);
+
+  wrapExt.style.display = showExt ? 'block' : 'none';
+  wrapInt.style.display = showInt ? 'block' : 'none';
+
+  // Label dynamique
+  if(lblExt) {
+    if(m === 'plax-2f')    lblExt.textContent = 'Couleur (2 faces)';
+    else if(m === 'bicolore') lblExt.textContent = 'Couleur extérieure';
+    else                   lblExt.textContent = 'Couleur extérieure';
+  }
+}
+
+function buildColorisLabel(p) {
+  if(!p.colorisMode || p.colorisMode === 'blanc') return 'Blanc';
+  const findNom = code => PALETTE_ALUPLAST.find(c=>c.code===code)?.nom || code;
+  switch(p.colorisMode) {
+    case 'plax-ext':  return `Plax. ext. ${findNom(p.colorisExt)} / int. Blanc`;
+    case 'plax-int':  return `Plax. int. ${findNom(p.colorisInt)} / ext. Blanc`;
+    case 'plax-2f':   return `Plax. 2 faces ${findNom(p.colorisExt)}`;
+    case 'bicolore':  return `Bicolore ext. ${findNom(p.colorisExt)} / int. ${findNom(p.colorisInt)}`;
+    default: return '';
+  }
 }
 
 function onAutreDesigChange(id) {
@@ -579,9 +893,11 @@ function refreshCascade(id) {
   // Gamme
   refreshGamme(id);
 
-  // Ouverture
-  const ouvSel = document.getElementById(`ouv-${id}`);
-  if(ouvSel) ouvSel.disabled = !p.matiere;
+  // Ouverture (pas de select unique pour les fenêtres)
+  if(p.type !== 'fenetre') {
+    const ouvSel = document.getElementById(`ouv-${id}`);
+    if(ouvSel) ouvSel.disabled = !p.matiere;
+  }
 
   // Vitrage
   const vitSel = document.getElementById(`vit-${id}`);
@@ -687,7 +1003,34 @@ function updateDesignation(id) {
   }
   if(p.ouverture) parts.push(p.ouverture);
   if(p.largeur && p.hauteur) parts.push(`${p.largeur}×${p.hauteur}mm`);
+  // Coloris (PVC uniquement)
+  if(p.matiere === 'PVC') {
+    const colorisLabel = buildColorisLabel(p);
+    if(colorisLabel) parts.push(colorisLabel);
+  }
   if(p.vitrage && p.vitrage !== 'N/A') parts.push(p.vitrage);
+
+  // Coloris PVC
+  if(p.matiere === 'PVC' && p.colorisMode) {
+    const modeLabels = {
+      'blanc':    'Blanc',
+      'plax-ext': 'Plaxé ext.',
+      'plax-int': 'Plaxé int.',
+      'plax-2f':  'Plaxé 2 faces',
+      'bicolore': 'Bicolore',
+    };
+    let colorisStr = modeLabels[p.colorisMode] || '';
+    if(p.colorisMode === 'bicolore') {
+      const extNom = PALETTE_ALUPLAST.find(c=>c.code===p.colorisExt)?.nom || p.colorisExt;
+      const intNom = PALETTE_ALUPLAST.find(c=>c.code===p.colorisInt)?.nom || p.colorisInt;
+      if(p.colorisExt) colorisStr += ` ext: ${p.colorisExt} ${extNom}`;
+      if(p.colorisInt) colorisStr += ` / int: ${p.colorisInt} ${intNom}`;
+    } else if(p.colorisMode !== 'blanc' && p.colorisExt) {
+      const nom = PALETTE_ALUPLAST.find(c=>c.code===p.colorisExt)?.nom || '';
+      colorisStr += `: ${p.colorisExt} ${nom}`;
+    }
+    if(colorisStr) parts.push(colorisStr);
+  }
 
   p.designation = parts.length > 0 ? `${cat.label} ${parts.join(' — ')}` : '';
 
@@ -857,7 +1200,7 @@ function renderProduits() {
 
     // Ouverture options
     let ouvOpts = '<option value="">— Type d\'ouverture —</option>';
-    cat.ouvertures.forEach(o => ouvOpts += `<option value="${o}" ${p.ouverture===o?'selected':''}>${o}</option>`);
+    if(cat.ouvertures) cat.ouvertures.forEach(o => ouvOpts += `<option value="${o}" ${p.ouverture===o?'selected':''}>${o}</option>`);
     const ouvDis = p.matiere ? '' : 'disabled';
 
     // Vitrage options
@@ -966,6 +1309,56 @@ function renderProduits() {
 
             <div class="cascade-sep"></div>
 
+            ${p.type === 'fenetre' ? `
+            <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">④ Configuration des ouvrants</div>
+
+            <div class="config-row3" style="margin-bottom:8px">
+              <div class="config-step">
+                <label>Nb de vantaux</label>
+                <select id="fen-nb-${p.id}" onchange="onFenNbVantauxChange(${p.id})">
+                  <option value="1" ${p.fenNbVantaux===1?'selected':''}>1 vantail</option>
+                  <option value="2" ${p.fenNbVantaux===2?'selected':''}>2 vantaux</option>
+                  <option value="3" ${p.fenNbVantaux===3?'selected':''}>3 vantaux</option>
+                </select>
+              </div>
+              <div class="config-step">
+                <label>Imposte / Allège</label>
+                <select id="fen-imposte-${p.id}" onchange="onFenImposteChange(${p.id})">
+                  <option value="" ${!p.fenImposte?'selected':''}>Aucune</option>
+                  <option value="imposte" ${p.fenImposte==='imposte'?'selected':''}>Imposte</option>
+                  <option value="allege"  ${p.fenImposte==='allege'?'selected':''}>Allège</option>
+                </select>
+              </div>
+              <div class="config-step" id="fen-imposte-ouv-wrap-${p.id}" style="${p.fenImposte?'':'display:none'}">
+                <label>${p.fenImposte==='allege'?'Ouverture allège':'Ouverture imposte'}</label>
+                <select id="fen-imposte-ouv-${p.id}" onchange="onFenImpostOuvChange(${p.id})">
+                  <option value="" ${!p.fenImpostOuv?'selected':''}>— Choisir —</option>
+                  <option value="Fixe" ${p.fenImpostOuv==='Fixe'?'selected':''}>Fixe</option>
+                  <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB (oscillo-battant)</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="fen-vantaux-wrap-${p.id}" class="${p.fenNbVantaux===1?'config-step':p.fenNbVantaux===2?'config-row2':'config-row3'}">
+              ${p.fenVantaux.map((v,i)=>`
+                <div class="config-step">
+                  <label>${['V1','V2','V3'][i]}</label>
+                  <select id="fen-v-${p.id}-${i}" onchange="onFenVantailOuvChange(${p.id},${i})">
+                    <option value="">— Ouvrant —</option>
+                    <option value="Fixe"  ${v.ouv==='Fixe'?'selected':''}>Fixe</option>
+                    <option value="OF"    ${v.ouv==='OF'?'selected':''}>OF (oscillo-battant)</option>
+                    <option value="OF+OB" ${v.ouv==='OF+OB'?'selected':''}>OF + OB</option>
+                  </select>
+                </div>`).join('')}
+            </div>
+
+            <div class="config-step" style="margin-top:8px">
+              <label>⑤ Vitrage</label>
+              <select id="vit-${p.id}" onchange="onVitrageChange(${p.id})" ${vitDis}>
+                ${vitOpts}
+              </select>
+            </div>
+            ` : `
             <div class="config-row2">
               <div class="config-step">
                 <label>④ Ouverture</label>
@@ -980,6 +1373,7 @@ function renderProduits() {
                 </select>
               </div>
             </div>
+            `}
 
             <div class="config-row2" style="margin-top:6px">
               <div class="config-step">
@@ -991,6 +1385,36 @@ function renderProduits() {
                 <input type="number" id="haut-${p.id}" value="${p.hauteur}" placeholder="ex: 1200" oninput="onDimChange(${p.id})" ${IS}>
               </div>
             </div>
+
+            ${p.matiere === 'PVC' ? `
+            <div class="cascade-sep" style="margin-top:10px"></div>
+            <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin-bottom:6px">Coloris</div>
+            <div class="config-step">
+              <label>Mode de coloris</label>
+              <select id="col-mode-${p.id}" onchange="onColorisModeChange(${p.id})">
+                <option value="">— Choisir —</option>
+                <option value="blanc"    ${p.colorisMode==='blanc'   ?'selected':''}>Blanc (base)</option>
+                <option value="plax-ext" ${p.colorisMode==='plax-ext'?'selected':''}>Plaxage extérieur / intérieur blanc</option>
+                <option value="plax-int" ${p.colorisMode==='plax-int'?'selected':''}>Plaxage intérieur / extérieur blanc</option>
+                <option value="plax-2f"  ${p.colorisMode==='plax-2f' ?'selected':''}>Plaxage 2 faces (même couleur)</option>
+                <option value="bicolore" ${p.colorisMode==='bicolore'?'selected':''}>Bicolore (int ≠ ext)</option>
+              </select>
+            </div>
+            <div id="col-ext-wrap-${p.id}" class="config-step" style="${['plax-ext','plax-2f','bicolore'].includes(p.colorisMode)?'':'display:none'}">
+              <label id="col-ext-lbl-${p.id}">${p.colorisMode==='plax-2f'?'Couleur (2 faces)':'Couleur extérieure'}</label>
+              <select id="col-ext-${p.id}" onchange="onColorisExtChange(${p.id})">
+                <option value="">— Choisir dans la palette —</option>
+                ${PALETTE_ALUPLAST.map(c=>`<option value="${c.code}" ${p.colorisExt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('')}
+              </select>
+            </div>
+            <div id="col-int-wrap-${p.id}" class="config-step" style="${['plax-int','bicolore'].includes(p.colorisMode)?'':'display:none'}">
+              <label>Couleur intérieure</label>
+              <select id="col-int-${p.id}" onchange="onColorisIntChange(${p.id})">
+                <option value="">— Choisir dans la palette —</option>
+                ${PALETTE_ALUPLAST.map(c=>`<option value="${c.code}" ${p.colorisInt===c.code?'selected':''}>${c.code} — ${c.nom}</option>`).join('')}
+              </select>
+            </div>
+            ` : ''}
           </div>
 
           <div class="${desigClass}" id="desig-${p.id}">${desigContent}</div>
