@@ -763,30 +763,6 @@ function paletteOptions(selected='') {
 // ══════════════════════════════════════════════
 // COLORIS — HANDLERS
 // ══════════════════════════════════════════════
-function isPVC(p) {
-  return p.matiere === 'PVC';
-}
-
-function onColorisMode(id) {
-  const p = produits.find(x=>x.id===id);
-  p.colorisMode = document.getElementById(`col-mode-${id}`)?.value || '';
-  p.colorisExt = ''; p.colorisInt = '';
-  refreshColorisSelects(id);
-  updateDesignation(id);
-}
-
-function onColorisExt(id) {
-  const p = produits.find(x=>x.id===id);
-  p.colorisExt = document.getElementById(`col-ext-${id}`)?.value || '';
-  updateDesignation(id);
-}
-
-function onColorisInt(id) {
-  const p = produits.find(x=>x.id===id);
-  p.colorisInt = document.getElementById(`col-int-${id}`)?.value || '';
-  updateDesignation(id);
-}
-
 function refreshColorisSelects(id) {
   const p = produits.find(x=>x.id===id);
   const extWrap = document.getElementById(`col-ext-wrap-${id}`);
@@ -908,10 +884,6 @@ const VITRAGE_OPTIONS = {
 const VITRAGE_SIMPLE_TYPES = ['garage','volet','autre'];
 // Types avec vitrage libre (porte d'entrée)
 const VITRAGE_PORTE_TYPES = ['porte-entree'];
-
-function useVitrageCascade(type) {
-  return !VITRAGE_SIMPLE_TYPES.includes(type) && !VITRAGE_PORTE_TYPES.includes(type);
-}
 
 function onVitTypeChange(id) {
   const p = produits.find(x=>x.id===id);
@@ -1440,7 +1412,7 @@ function voletStandaloneHTML(p) {
     <div style="font-size:9px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;margin:8px 0 6px">④ Type de volet</div>
     <div class="config-step" style="margin-bottom:8px">
       <label>Type d'installation</label>
-      <select id="vr-type-${id}" onchange="onVrTypeChange(${id})">
+      <select id="vrs-type-${id}" onchange="onVrTypeChange(${id})">
         <option value="">— Choisir —</option>
         <option value="exterieur" ${p.vrType==='exterieur'?'selected':''}>Extérieur</option>
         <option value="monobloc"  ${p.vrType==='monobloc' ?'selected':''}>Monobloc</option>
@@ -1453,29 +1425,29 @@ function voletStandaloneHTML(p) {
     <div class="config-row2" style="margin-bottom:6px">
       <div class="config-step">
         <label>Coloris ext.</label>
-        <input type="text" id="vr-col-ext-${id}" value="${p.vrColExt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColExt','vr-col-ext-${id}')" ${IS}>
+        <input type="text" id="vrs-col-ext-${id}" value="${p.vrColExt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColExt','vrs-col-ext-${id}')" ${IS}>
       </div>
       <div class="config-step">
         <label>Coloris int.</label>
-        <input type="text" id="vr-col-int-${id}" value="${p.vrColInt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColInt','vr-col-int-${id}')" ${IS}>
+        <input type="text" id="vrs-col-int-${id}" value="${p.vrColInt||''}" placeholder="Ex: Blanc 9016…" oninput="onVrChange(${id},'vrColInt','vrs-col-int-${id}')" ${IS}>
       </div>
     </div>
 
     <div class="config-step" style="margin-bottom:6px">
       <label>Tablier</label>
-      <select id="vr-tablier-${id}" onchange="onVrChange(${id},'vrTablier','vr-tablier-${id}')">
+      <select id="vrs-tablier-${id}" onchange="onVrChange(${id},'vrTablier','vrs-tablier-${id}')">
         <option value="">— Choisir —</option>
         <option value="pvc" ${p.vrTablier==='pvc'?'selected':''}>PVC</option>
         <option value="alu" ${p.vrTablier==='alu'?'selected':''}>Aluminium</option>
       </select>
     </div>
-    <div id="vr-tablier-lib-wrap-${id}" class="config-step" style="${tablierPvcShow?'':'display:none'};margin-bottom:6px">
+    <div id="vrs-tablier-lib-wrap-${id}" class="config-step" style="${tablierPvcShow?'':'display:none'};margin-bottom:6px">
       <label>Référence tablier PVC</label>
-      <input type="text" id="vr-tablier-lib-${id}" value="${p.vrTablierLib||''}" placeholder="Ex: lame 37mm…" oninput="onVrChange(${id},'vrTablierLib','vr-tablier-lib-${id}')" ${IS}>
+      <input type="text" id="vrs-tablier-lib-${id}" value="${p.vrTablierLib||''}" placeholder="Ex: lame 37mm…" oninput="onVrChange(${id},'vrTablierLib','vrs-tablier-lib-${id}')" ${IS}>
     </div>
-    <div id="vr-tablier-alu-wrap-${id}" class="config-step" style="${tablierAluShow?'':'display:none'};margin-bottom:6px">
+    <div id="vrs-tablier-alu-wrap-${id}" class="config-step" style="${tablierAluShow?'':'display:none'};margin-bottom:6px">
       <label>Épaisseur tablier alu</label>
-      <select id="vr-tablier-alu-${id}" onchange="onVrChange(${id},'vrTablierAlu','vr-tablier-alu-${id}')">
+      <select id="vrs-tablier-alu-${id}" onchange="onVrChange(${id},'vrTablierAlu','vrs-tablier-alu-${id}')">
         <option value="">— Choisir —</option>
         <option value="39mm" ${p.vrTablierAlu==='39mm'?'selected':''}>39mm</option>
         <option value="43mm" ${p.vrTablierAlu==='43mm'?'selected':''}>43mm</option>
@@ -1486,17 +1458,17 @@ function voletStandaloneHTML(p) {
     <div class="config-row2" style="margin-bottom:6px">
       <div class="config-step">
         <label>Coloris tablier</label>
-        <input type="text" id="vr-tablier-col-${id}" value="${p.vrTablierCol||''}" placeholder="Ex: Blanc…" oninput="onVrChange(${id},'vrTablierCol','vr-tablier-col-${id}')" ${IS}>
+        <input type="text" id="vrs-tablier-col-${id}" value="${p.vrTablierCol||''}" placeholder="Ex: Blanc…" oninput="onVrChange(${id},'vrTablierCol','vrs-tablier-col-${id}')" ${IS}>
       </div>
       <div class="config-step">
         <label>Couleur lame finale</label>
-        <input type="text" id="vr-lame-${id}" value="${p.vrLameFinale||''}" placeholder="Ex: Gris anthracite…" oninput="onVrChange(${id},'vrLameFinale','vr-lame-${id}')" ${IS}>
+        <input type="text" id="vrs-lame-${id}" value="${p.vrLameFinale||''}" placeholder="Ex: Gris anthracite…" oninput="onVrChange(${id},'vrLameFinale','vrs-lame-${id}')" ${IS}>
       </div>
     </div>
 
     <div id="vr-console-standalone-wrap-${id}" class="config-step" style="${p.vrType==='monobloc' && parseInt(p.largeur)>1800 ? '' : 'display:none'};margin-bottom:6px">
       <label style="display:flex;align-items:center;gap:6px">Console statique <span style="font-size:9px;color:var(--copper-light);background:rgba(200,120,42,0.15);border:1px solid rgba(200,120,42,0.3);border-radius:4px;padding:1px 6px">Monobloc > 1800mm</span></label>
-      <select id="vr-console-${id}" onchange="onVrChange(${id},'vrConsole','vr-console-${id}')">
+      <select id="vrs-console-${id}" onchange="onVrChange(${id},'vrConsole','vrs-console-${id}')">
         <option value="">— Choisir —</option>
         <option value="non" ${p.vrConsole==='non'?'selected':''}>Non</option>
         <option value="oui" ${p.vrConsole==='oui'?'selected':''}>Oui</option>
@@ -1505,47 +1477,47 @@ function voletStandaloneHTML(p) {
 
     <div class="config-step" style="margin-bottom:6px">
       <label>Commande</label>
-      <select id="vr-cmd-${id}" onchange="onVrChange(${id},'vrCommande','vr-cmd-${id}')">
+      <select id="vrs-cmd-${id}" onchange="onVrChange(${id},'vrCommande','vrs-cmd-${id}')">
         <option value="">— Choisir —</option>
         <option value="manuelle"   ${p.vrCommande==='manuelle'  ?'selected':''}>Manuelle</option>
         <option value="electrique" ${p.vrCommande==='electrique'?'selected':''}>Électrique</option>
       </select>
     </div>
-    <div id="vr-manuelle-wrap-${id}" class="config-step" style="${manuelleShow?'':'display:none'};margin-bottom:6px">
+    <div id="vrs-manuelle-wrap-${id}" class="config-step" style="${manuelleShow?'':'display:none'};margin-bottom:6px">
       <label>Type manuelle</label>
-      <select id="vr-manuelle-${id}" onchange="onVrChange(${id},'vrManuelle','vr-manuelle-${id}')">
+      <select id="vrs-manuelle-${id}" onchange="onVrChange(${id},'vrManuelle','vrs-manuelle-${id}')">
         <option value="">— Choisir —</option>
         <option value="sangle"    ${p.vrManuelle==='sangle'   ?'selected':''}>Sangle</option>
         <option value="manivelle" ${p.vrManuelle==='manivelle'?'selected':''}>Manivelle</option>
       </select>
     </div>
-    <div id="vr-elec-wrap-${id}" style="${elecShow?'':'display:none'}">
+    <div id="vrs-elec-wrap-${id}" style="${elecShow?'':'display:none'}">
       <div class="config-step" style="margin-bottom:6px">
         <label>Motorisation</label>
-        <select id="vr-elec-${id}" onchange="onVrChange(${id},'vrElec','vr-elec-${id}')">
+        <select id="vrs-elec-${id}" onchange="onVrChange(${id},'vrElec','vrs-elec-${id}')">
           <option value="">— Choisir —</option>
           <option value="somfy" ${p.vrElec==='somfy'?'selected':''}>Somfy</option>
           <option value="basic" ${p.vrElec==='basic'?'selected':''}>Basic</option>
           <option value="autre" ${p.vrElec==='autre'?'selected':''}>Autre</option>
         </select>
       </div>
-      <div id="vr-somfy-wrap-${id}" class="config-step" style="${somfyShow?'':'display:none'};margin-bottom:6px">
+      <div id="vrs-somfy-wrap-${id}" class="config-step" style="${somfyShow?'':'display:none'};margin-bottom:6px">
         <label>Somfy</label>
-        <select id="vr-somfy-${id}" onchange="onVrChange(${id},'vrSomfy','vr-somfy-${id}')">
+        <select id="vrs-somfy-${id}" onchange="onVrChange(${id},'vrSomfy','vrs-somfy-${id}')">
           <option value="">— Choisir —</option>
           <option value="filaire"  ${p.vrSomfy==='filaire' ?'selected':''}>Filaire</option>
           <option value="sans-fil" ${p.vrSomfy==='sans-fil'?'selected':''}>Sans fil</option>
         </select>
       </div>
-      <div id="vr-elec-lib-wrap-${id}" class="config-step" style="${elecLibShow?'':'display:none'};margin-bottom:6px">
+      <div id="vrs-elec-lib-wrap-${id}" class="config-step" style="${elecLibShow?'':'display:none'};margin-bottom:6px">
         <label>Motorisation (saisie libre)</label>
-        <input type="text" id="vr-elec-lib-${id}" value="${p.vrElecLib||''}" placeholder="Marque / référence…" oninput="onVrChange(${id},'vrElecLib','vr-elec-lib-${id}')" ${IS}>
+        <input type="text" id="vrs-elec-lib-${id}" value="${p.vrElecLib||''}" placeholder="Marque / référence…" oninput="onVrChange(${id},'vrElecLib','vrs-elec-lib-${id}')" ${IS}>
       </div>
     </div>
 
     <div class="config-step">
       <label>Moustiquaire intégrée</label>
-      <select id="vr-moust-${id}" onchange="onVrChange(${id},'vrMoust','vr-moust-${id}')">
+      <select id="vrs-moust-${id}" onchange="onVrChange(${id},'vrMoust','vrs-moust-${id}')">
         <option value="">— Choisir —</option>
         <option value="non" ${p.vrMoust==='non'?'selected':''}>Non</option>
         <option value="oui" ${p.vrMoust==='oui'?'selected':''}>Oui</option>
