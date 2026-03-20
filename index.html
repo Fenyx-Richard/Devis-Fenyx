@@ -415,7 +415,8 @@ function getDevisNum() {
   const n = parseInt(localStorage.getItem('fenyx_devis_counter')||'0') + 1;
   localStorage.setItem('fenyx_devis_counter', n);
   const d = new Date();
-  return `DEV-${d.getFullYear()}-${String(n).padStart(3,'0')}`;
+  const date = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  return `DEV-${date}-${String(n).padStart(3,'0')}`;
 }
 function resetDevisCounter() {
   if(!confirm('Remettre le compteur de devis à 0 ?')) return;
