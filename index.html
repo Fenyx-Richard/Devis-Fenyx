@@ -440,8 +440,8 @@ function getNumeroForType(type) {
 }
 
 function fmtEur(n) {
-  const formatted = (n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
-  return formatted + ' €';
+  const formatted = (n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return formatted + ' \u20ac';
 }
 
 // ══════════════════════════════════════════════
