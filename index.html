@@ -509,6 +509,10 @@ function ajouterProduit(type) {
     pgBattanteLib: '',
     // Note libre produit
     notesProduit: '',
+    // Performances thermiques
+    coefThermique: '',   // ex: Uw 1.2 W/m²K
+    facteurSolaire: '',  // ex: 65%
+    transLumineuse: '',  // ex: 82%
     // Photos
     photoInt: '',   // base64 vue intérieure
     photoExt: '',   // base64 vue extérieure  // saisie libre si battante         // 'exterieur'|'monobloc'|'caisson' // [{ouv:'fixe'|'coulissant'}]
@@ -1602,6 +1606,11 @@ function buildPgDesignation(id) {
     p.designation = '';
   }
   if(p.notesProduit) p.designation += (p.designation ? '\n' : '') + p.notesProduit;
+  const thermParts = [];
+  if(p.coefThermique)  thermParts.push(`Uw ${p.coefThermique}`);
+  if(p.facteurSolaire) thermParts.push(`g ${p.facteurSolaire}`);
+  if(p.transLumineuse) thermParts.push(`TL ${p.transLumineuse}`);
+  if(thermParts.length) p.designation += (p.designation ? '\n' : '') + thermParts.join(' — ');
   const box = document.getElementById(`desig-${id}`);
   if(box) {
     if(p.designation) { box.textContent = p.designation; box.className = 'designation-box'; }
@@ -1749,6 +1758,14 @@ function removePhoto(id, field) {
   const zone    = document.getElementById(`photo-zone-${field}-${id}`);
   if(preview) { preview.src=''; preview.style.display='none'; }
   if(zone)    { const ph = zone.querySelector('.photo-placeholder'); if(ph) ph.style.display='flex'; }
+}
+
+function onThermiqueChange(id) {
+  const p = produits.find(x=>x.id===id);
+  p.coefThermique  = document.getElementById(`thermique-uw-${id}`)?.value  || '';
+  p.facteurSolaire = document.getElementById(`thermique-fs-${id}`)?.value  || '';
+  p.transLumineuse = document.getElementById(`thermique-tl-${id}`)?.value  || '';
+  updateDesignation(id);
 }
 
 function onNotesProduitChange(id) {
@@ -1995,6 +2012,12 @@ function updateDesignation(id) {
   }
   // Note libre produit
   if(p.notesProduit) p.designation += '\n' + p.notesProduit;
+  // Performances thermiques
+  const thermParts = [];
+  if(p.coefThermique)  thermParts.push(`Uw ${p.coefThermique}`);
+  if(p.facteurSolaire) thermParts.push(`g ${p.facteurSolaire}`);
+  if(p.transLumineuse) thermParts.push(`TL ${p.transLumineuse}`);
+  if(thermParts.length) p.designation += '\n' + thermParts.join(' — ');
 
   const box = document.getElementById(`desig-${id}`);
   if(box) {
@@ -2808,6 +2831,22 @@ function renderProduits() {
             <label style="font-size:9px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase">Note / Spécificités techniques</label>
             <textarea id="notes-produit-${p.id}" rows="2" placeholder="Ex : Renforts spéciaux, contraintes de pose, remarques…" oninput="onNotesProduitChange(${p.id})" style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;resize:vertical">${p.notesProduit||''}</textarea>
           </div>
+          <div class="cascade-sep" style="margin-top:10px"></div>
+          <div style="font-size:9px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin:8px 0 6px">Performances thermiques</div>
+          <div class="config-row3" style="margin-top:4px">
+            <div class="config-step">
+              <label>Coef. thermique Uw</label>
+              <input type="text" id="thermique-uw-${p.id}" value="${p.coefThermique||''}" placeholder="ex: 1.2 W/m²K" oninput="onThermiqueChange(${p.id})" style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit">
+            </div>
+            <div class="config-step">
+              <label>Facteur solaire g</label>
+              <input type="text" id="thermique-fs-${p.id}" value="${p.facteurSolaire||''}" placeholder="ex: 65%" oninput="onThermiqueChange(${p.id})" style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit">
+            </div>
+            <div class="config-step">
+              <label>Transmission lumineuse</label>
+              <input type="text" id="thermique-tl-${p.id}" value="${p.transLumineuse||''}" placeholder="ex: 82%" oninput="onThermiqueChange(${p.id})" style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit">
+            </div>
+          </div>
         </div>
         </div>
 
@@ -3092,6 +3131,25 @@ function genererPDF() {
         doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...navy);
         doc.text(line, textX, ty);
         doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...dark);
+      } else if(line.startsWith('Uw ') || line.includes(' — Uw ') || (line.includes('Uw') && (line.includes('g ') || line.includes('TL ')))) {
+        // Ligne thermique : Uw en gras, reste normal
+        doc.setFontSize(6.5);
+        const uwMatch = line.match(/^(Uw [^\s—]+)/);
+        if(uwMatch) {
+          // "Uw 1.2 W/m²K" en gras + suite en normal
+          doc.setFont('helvetica','bold'); doc.setTextColor(13,27,42);
+          doc.text(uwMatch[1], textX, ty);
+          const rest = line.slice(uwMatch[1].length);
+          if(rest) {
+            const uwW = doc.getTextWidth(uwMatch[1]);
+            doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
+            doc.text(rest, textX + uwW, ty);
+          }
+        } else {
+          doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
+          doc.text(line, textX, ty);
+        }
+        doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
       } else {
         doc.setFontSize(6.5);
         doc.text(line, textX, ty);
