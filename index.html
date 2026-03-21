@@ -3047,17 +3047,38 @@ function genererPDF() {
   doc.text('Total HT', W-m-2, y+5, {align:'right'});
   y+=7;
 
+  // ── Helper saut de page ──────────────────────
+  const pageBottom = H - 18;
+  function addNewPage() {
+    doc.addPage();
+    // Header allégé
+    doc.setFillColor(...navy); doc.rect(0, 0, W, 14, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
+    doc.text('FENYX OUVERTURES', m, 9);
+    doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(192,200,212);
+    doc.text(`${devisNum}  ·  ${dateStr}`, W-m, 9, {align:'right'});
+    // En-tête colonnes
+    let ny = 18;
+    doc.setFillColor(...navy); doc.rect(m, ny, W-m*2, 7, 'F');
+    doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
+    doc.text('Photos', m+2, ny+5);
+    doc.text('Désignation / Descriptif', m+80, ny+5);
+    doc.text('Total HT', W-m-2, ny+5, {align:'right'});
+    return ny + 7;
+  }
+
   const {ht,tva,tvaAmt,ttc}=getTotaux();
   let even=false;
   produits.forEach(p=>{
     const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
 
-    // Hauteur de ligne adaptée : photos si présentes → 40mm, sinon texte seul → auto
+    // Hauteur de ligne : photos taille fixe, texte peut être plus long
     const hasPhoto = p.photoInt || p.photoExt;
-    const photoW = 36; // largeur de chaque photo
+    const PHOTO_H = 32;           // hauteur fixe de la photo — ne change jamais
+    const PHOTO_W = PHOTO_H * 4/3; // ~42.7mm, ratio 4:3
     const photoGap = 3;
-    const photoColW = hasPhoto ? (photoW*2 + photoGap + 4) : 0;
-    const textX = m + photoColW + (hasPhoto ? 4 : 0);
+    const photoColW = hasPhoto ? (PHOTO_W*2 + photoGap + 6) : 0;
+    const textX = m + photoColW + (hasPhoto ? 2 : 0);
     const textW = W - m - textX - 2;
 
     // Préparer les lignes de désignation (wrap manuel)
@@ -3085,35 +3106,41 @@ function genererPDF() {
     textLines.push(prix_line);
 
     const textH = textLines.length * lineH + 8;
-    const rowH = Math.max(hasPhoto ? 42 : 0, textH, 20);
+    // rowH = max(texte, photo+label) — les photos ont une taille fixe
+    const rowH = Math.max(hasPhoto ? PHOTO_H + 8 : 0, textH, 20);
+
+    // Saut de page si nécessaire
+    if(y + rowH > pageBottom) { y = addNewPage(); even = false; }
 
     // Fond alterné
     if(even){ doc.setFillColor(250,248,245); doc.rect(m,y,W-m*2,rowH,'F'); }
     doc.setDrawColor(238,238,238); doc.setLineWidth(0.3); doc.rect(m,y,W-m*2,rowH,'S');
 
-    // Photos
+    // Photos : taille FIXE, centrées verticalement dans la ligne
     if(hasPhoto) {
       let px = m+2;
-      const ph = rowH - 4;
-      const pw = Math.min(photoW, (ph*4/3)); // ratio 4:3
+      const py = y + Math.max(2, (rowH - PHOTO_H - 5) / 2); // centré verticalement
       [p.photoInt, p.photoExt].forEach((photo, i) => {
         if(photo) {
           try {
-            // Detect format from data URL
             const fmt = photo.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-            doc.addImage(photo, fmt, px, y+2, pw, ph);
-          } catch(e) {}
+            doc.addImage(photo, fmt, px, py, PHOTO_W, PHOTO_H);
+          } catch(e) {
+            doc.setFillColor(220,220,220);
+            doc.roundedRect(px, py, PHOTO_W, PHOTO_H, 1, 1, 'F');
+          }
         } else {
-          // Placeholder gris
           doc.setFillColor(220,220,220);
-          doc.roundedRect(px, y+2, pw, ph, 2, 2, 'F');
-          doc.setFontSize(5); doc.setTextColor(150,150,150);
-          doc.text(i===0?'Vue int.':'Vue ext.', px+pw/2, y+ph/2+2, {align:'center'});
+          doc.roundedRect(px, py, PHOTO_W, PHOTO_H, 1, 1, 'F');
         }
-        // Label sous photo
-        doc.setFontSize(5); doc.setTextColor(120,120,120);
-        doc.text(i===0?'Vue int.':'Vue ext.', px+pw/2, y+ph+5, {align:'center'});
-        px += pw + photoGap;
+        // Label DANS le bas de la photo (fond semi-transparent, jamais à l'extérieur)
+        doc.setFillColor(0, 0, 0);
+        doc.setGState && doc.setGState(doc.GState ? doc.GState({opacity:0.45}) : {});
+        doc.rect(px, py + PHOTO_H - 5, PHOTO_W, 5, 'F');
+        doc.setFontSize(5); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+        doc.text(i===0 ? 'Vue int.' : 'Vue ext.', px + PHOTO_W/2, py + PHOTO_H - 1.5, {align:'center'});
+        doc.setTextColor(...dark);
+        px += PHOTO_W + photoGap;
       });
     }
 
@@ -3164,6 +3191,9 @@ function genererPDF() {
     y+=rowH; even=!even;
   });
   y+=4;
+
+  // Saut de page si pas assez de place pour totaux + conditions (~80mm)
+  if(y + 80 > pageBottom) { y = addNewPage(); }
 
   // Totaux
   const totX=W-m-60;
