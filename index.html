@@ -412,14 +412,14 @@ let produits = [];
 let nextId = 1;
 
 function getDevisNum() {
-  const n = parseInt(localStorage.getItem('fenyx_devis_counter')||'0') + 1;
-  localStorage.setItem('fenyx_devis_counter', n);
   const d = new Date();
   const date = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-  return `DEV-${date}-${String(n).padStart(3,'0')}`;
+  const num = parseInt(localStorage.getItem('fenyx_devis_counter') || '0') + 1;
+  localStorage.setItem('fenyx_devis_counter', String(num));
+  return `DEV-${date}-${String(num).padStart(3,'0')}`;
 }
 function resetDevisCounter() {
-  if(!confirm('Remettre le compteur de devis à 0 ?')) return;
+  if(!confirm('Remettre le compteur à zéro ? Le prochain devis sera DEV-...-001.')) return;
   localStorage.setItem('fenyx_devis_counter', '0');
   devisNum = getDevisNum();
   const el = document.getElementById('devisNumInput');
@@ -1412,7 +1412,7 @@ function onVrTypeChange(id) {
   p.vrType = document.getElementById(`vr-type-${id}`)?.value || '';
   if(p.vrType !== 'monobloc') p.vrConsole = '';
   const cw = document.getElementById(`vr-console-standalone-wrap-${id}`);
-  if(cw) cw.style.display = (p.vrType === 'monobloc' && parseInt(p.largeur) > 1800) ? 'block' : 'none';
+  if(cw) cw.style.display = (p.vrType === 'monobloc' && parseInt(p.largeur) >= 1800) ? 'block' : 'none';
   updateDesignation(id);
 }
 
@@ -1811,14 +1811,14 @@ function onDimChange(id) {
   // Console intégrée fenêtres/PF (vrOui=oui, largeur > 1800)
   const consoleWrap = document.getElementById(`vr-console-wrap-${id}`);
   if(consoleWrap) {
-    const show = parseInt(p.largeur) > 1800;
+    const show = parseInt(p.largeur) >= 1800;
     consoleWrap.style.display = show ? 'block' : 'none';
     if(!show) p.vrConsole = '';
   }
   // Console volet standalone (monobloc > 1800)
   const consoleStandalone = document.getElementById(`vr-console-standalone-wrap-${id}`);
   if(consoleStandalone) {
-    const show = p.vrType === 'monobloc' && parseInt(p.largeur) > 1800;
+    const show = p.vrType === 'monobloc' && parseInt(p.largeur) >= 1800;
     consoleStandalone.style.display = show ? 'block' : 'none';
     if(!show) p.vrConsole = '';
   }
@@ -2123,7 +2123,7 @@ function pieceAppuiVrHTML(p) {
   const somfyShow       = p.vrElec === 'somfy';
   const elecLibShow     = p.vrElec === 'autre';
 
-  const consoleShow = parseInt(p.largeur) > 1800;
+  const consoleShow = parseInt(p.largeur) >= 1800;
 
   return `
   <div class="cascade-sep" style="margin-top:10px"></div>
