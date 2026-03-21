@@ -3133,9 +3133,8 @@ function genererPDF() {
           doc.setFillColor(220,220,220);
           doc.roundedRect(px, py, PHOTO_W, PHOTO_H, 1, 1, 'F');
         }
-        // Label DANS le bas de la photo (fond semi-transparent, jamais à l'extérieur)
-        doc.setFillColor(0, 0, 0);
-        doc.setGState && doc.setGState(doc.GState ? doc.GState({opacity:0.45}) : {});
+        // Label DANS le bas de la photo — fond gris foncé opaque
+        doc.setFillColor(40, 40, 40);
         doc.rect(px, py + PHOTO_H - 5, PHOTO_W, 5, 'F');
         doc.setFontSize(5); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
         doc.text(i===0 ? 'Vue int.' : 'Vue ext.', px + PHOTO_W/2, py + PHOTO_H - 1.5, {align:'center'});
