@@ -142,9 +142,18 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
     <h1>Fenyx Ouvertures</h1>
     <p>Générateur de devis pro</p>
   </div>
-  <div class="header-actions">
+  <div class="header-actions" style="position:relative">
+    <button class="btn btn-ghost btn-sm" onclick="sauvegarderDevis()" title="Sauvegarder ce devis">💾 Sauvegarder</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleSavePanel()" title="Voir les devis sauvegardés">📂 Mes devis</button>
     <button class="btn btn-ghost btn-sm" onclick="reinitialiser()">🔄 Nouveau</button>
     <button class="btn btn-primary btn-sm" onclick="genererPDF()">📄 PDF</button>
+    <div id="save-panel" style="display:none;position:absolute;top:44px;right:0;width:300px;background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:14px;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:11px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;font-weight:700">Devis sauvegardés</span>
+        <span onclick="toggleSavePanel()" style="cursor:pointer;color:var(--text-muted);font-size:16px;line-height:1">✕</span>
+      </div>
+      <div id="saved-list"></div>
+    </div>
   </div>
 </header>
 
@@ -2992,6 +3001,8 @@ function updatePreview() {
     </div>
   </div>
   <div class="prev-footer">Fenyx Ouvertures · SIREN 101574127 · 133 rue Louis Montois 59790 Ronchin</div>`;
+  // Sauvegarde automatique silencieuse (après définition)
+  if(typeof autosave === 'function') autosave();
 }
 
 // ══════════════════════════════════════════════
@@ -3220,6 +3231,130 @@ function genererPDF() {
 // ══════════════════════════════════════════════
 // RÉINITIALISER
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// SAUVEGARDE AUTOMATIQUE & GESTION DEVIS
+// ══════════════════════════════════════════════
+const AUTOSAVE_KEY = 'fenyx_autosave';
+const SAVED_KEY    = 'fenyx_saved_devis';
+
+function collectState() {
+  return {
+    devisNum,
+    produits: JSON.parse(JSON.stringify(produits)),
+    nextId,
+    client: {
+      nom:      document.getElementById('clientNom')?.value||'',
+      tel:      document.getElementById('clientTel')?.value||'',
+      email:    document.getElementById('clientEmail')?.value||'',
+      adresse:  document.getElementById('clientAdresse')?.value||'',
+      date:     document.getElementById('devisDate')?.value||'',
+      notes:    document.getElementById('notes')?.value||'',
+      delai:    document.getElementById('delai')?.value||'',
+      acompte:  document.getElementById('acompte')?.value||'30',
+      validite: document.getElementById('validite')?.value||'30',
+      devisNum: document.getElementById('devisNumInput')?.value||'',
+    },
+    savedAt: Date.now(),
+  };
+}
+
+function restoreState(state) {
+  if(!state) return;
+  produits = state.produits || [];
+  nextId   = state.nextId   || (produits.length ? Math.max(...produits.map(p=>p.id))+1 : 1);
+  devisNum = state.devisNum || getDevisNum();
+  const c = state.client || {};
+  ['clientNom','clientTel','clientEmail','clientAdresse','devisDate','notes','delai','acompte','validite'].forEach(id => {
+    const key = id.replace('client','').toLowerCase();
+    const el = document.getElementById(id);
+    if(el && c[key] !== undefined) el.value = c[key];
+  });
+  // Champs non standard
+  if(c.nom     && document.getElementById('clientNom'))     document.getElementById('clientNom').value     = c.nom;
+  if(c.tel     && document.getElementById('clientTel'))     document.getElementById('clientTel').value     = c.tel;
+  if(c.email   && document.getElementById('clientEmail'))   document.getElementById('clientEmail').value   = c.email;
+  if(c.adresse && document.getElementById('clientAdresse')) document.getElementById('clientAdresse').value = c.adresse;
+  if(c.date    && document.getElementById('devisDate'))     document.getElementById('devisDate').value     = c.date;
+  if(c.notes   && document.getElementById('notes'))         document.getElementById('notes').value         = c.notes;
+  if(c.delai   && document.getElementById('delai'))         document.getElementById('delai').value         = c.delai;
+  if(c.acompte   && document.getElementById('acompte'))     document.getElementById('acompte').value       = c.acompte;
+  if(c.validite  && document.getElementById('validite'))    document.getElementById('validite').value      = c.validite;
+  if(c.devisNum  && document.getElementById('devisNumInput')) { devisNum = c.devisNum; document.getElementById('devisNumInput').value = c.devisNum; }
+  renderProduits(); updatePreview();
+}
+
+function autosave() {
+  try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(collectState())); }
+  catch(e) { console.warn('Autosave failed:', e); }
+}
+
+// Sauvegarde manuelle (liste nommée)
+function sauvegarderDevis() {
+  const nom = prompt('Nom de la sauvegarde :', document.getElementById('clientNom')?.value || 'Devis sans nom');
+  if(!nom) return;
+  const list = JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');
+  const existing = list.findIndex(d => d.name === nom);
+  const entry = { name: nom, state: collectState() };
+  if(existing >= 0) list[existing] = entry;
+  else list.push(entry);
+  localStorage.setItem(SAVED_KEY, JSON.stringify(list));
+  showToast(`✅ Devis « ${nom} » sauvegardé`);
+  renderSavedList();
+}
+
+function chargerDevis(nom) {
+  const list = JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');
+  const entry = list.find(d => d.name === nom);
+  if(!entry) return;
+  if(!confirm(`Charger « ${nom} » ? Le devis actuel sera remplacé.`)) return;
+  restoreState(entry.state);
+  showToast(`📂 Devis « ${nom} » chargé`);
+}
+
+function supprimerDevis(nom) {
+  if(!confirm(`Supprimer la sauvegarde « ${nom} » ?`)) return;
+  const list = JSON.parse(localStorage.getItem(SAVED_KEY)||'[]').filter(d => d.name !== nom);
+  localStorage.setItem(SAVED_KEY, JSON.stringify(list));
+  renderSavedList();
+  showToast(`🗑 Sauvegarde « ${nom} » supprimée`);
+}
+
+function renderSavedList() {
+  const list = JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');
+  const el = document.getElementById('saved-list');
+  if(!el) return;
+  if(!list.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:11px;padding:6px 0">Aucune sauvegarde</div>'; return; }
+  el.innerHTML = list.map(d => {
+    const date = new Date(d.state.savedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.name}</div>
+        <div style="font-size:10px;color:var(--text-muted)">${date} · ${d.state.produits?.length||0} produit(s)</div>
+      </div>
+      <button onclick="chargerDevis('${d.name.replace(/'/g,"\\'")}')" class="btn btn-sm" style="background:var(--copper);color:white;padding:3px 8px;font-size:10px">📂</button>
+      <button onclick="supprimerDevis('${d.name.replace(/'/g,"\\'")}')" class="btn btn-sm" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:3px 8px;font-size:10px">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function showToast(msg) {
+  let t = document.getElementById('fenyx-toast');
+  if(!t) { t = document.createElement('div'); t.id='fenyx-toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a3a2a;color:#7ecfa0;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:opacity 0.3s';
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity='0'; }, 2500);
+}
+
+function toggleSavePanel() {
+  const panel = document.getElementById('save-panel');
+  if(!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if(!open) renderSavedList();
+}
+
 function reinitialiser() {
   if(!confirm('Réinitialiser le devis ? Toutes les données seront perdues.')) return;
   produits=[]; nextId=1; devisNum=getDevisNum();
@@ -3228,6 +3363,7 @@ function reinitialiser() {
   const numInput=document.getElementById('devisNumInput'); if(numInput) numInput.value=devisNum;
   document.getElementById('acompte').value='30';
   document.getElementById('validite').value='30';
+  localStorage.removeItem(AUTOSAVE_KEY);
   renderProduits(); updatePreview();
 }
 
@@ -3236,6 +3372,21 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('devisDate').value=new Date().toISOString().split('T')[0];
   const numInput = document.getElementById('devisNumInput');
   if(numInput) numInput.value = devisNum;
+
+  // Restaurer la sauvegarde automatique si elle existe
+  try {
+    const saved = localStorage.getItem(AUTOSAVE_KEY);
+    if(saved) {
+      const state = JSON.parse(saved);
+      const age = Date.now() - (state.savedAt||0);
+      const ageMin = Math.round(age/60000);
+      if(state.produits?.length > 0) {
+        const msg = `Une sauvegarde automatique existe (il y a ${ageMin < 60 ? ageMin+'min' : Math.round(ageMin/60)+'h'}).\nVoulez-vous la restaurer ?`;
+        if(confirm(msg)) { restoreState(state); return; }
+      }
+    }
+  } catch(e) {}
+
   updatePreview();
 });
 </script>
