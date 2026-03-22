@@ -3041,9 +3041,10 @@ function genererPDF() {
 
   // En-tête section produits
   doc.setFillColor(...navy); doc.rect(m,y,W-m*2,7,'F');
-  doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
-  doc.text('Photos', m+2, y+5);
-  doc.text('Désignation / Descriptif', m+80, y+5);
+  doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
+  doc.text('Vue intérieure', m + COL_PHOTO/2, y+5, {align:'center'});
+  doc.text('Vue extérieure', m + COL_PHOTO + COL_GAP + COL_PHOTO/2, y+5, {align:'center'});
+  doc.text('Désignation / Descriptif', COL_TEXT_X, y+5);
   doc.text('Total HT', W-m-2, y+5, {align:'right'});
   y+=7;
 
@@ -3060,35 +3061,66 @@ function genererPDF() {
     // En-tête colonnes
     let ny = 18;
     doc.setFillColor(...navy); doc.rect(m, ny, W-m*2, 7, 'F');
-    doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
-    doc.text('Photos', m+2, ny+5);
-    doc.text('Désignation / Descriptif', m+80, ny+5);
+    doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(200,160,96);
+    doc.text('Vue intérieure', m + COL_PHOTO/2, ny+5, {align:'center'});
+    doc.text('Vue extérieure', m + COL_PHOTO + COL_GAP + COL_PHOTO/2, ny+5, {align:'center'});
+    doc.text('Désignation / Descriptif', COL_TEXT_X, ny+5);
     doc.text('Total HT', W-m-2, ny+5, {align:'right'});
     return ny + 7;
   }
+
+
+  // ── Layout colonnes FIXES ─────────────────────
+  const COL_PHOTO = 38;      // largeur de chaque colonne photo (mm)
+  const COL_GAP   = 2;       // espace entre photos
+  const COL_TOTAL = 22;      // largeur colonne Total HT
+  const COL_TEXT_X = m + COL_PHOTO*2 + COL_GAP*2 + 2; // X départ descriptif
+  const COL_TEXT_W = W - m - COL_TEXT_X - COL_TOTAL - 4; // largeur descriptif
+  const ROW_H = 40;          // hauteur ligne FIXE — ne change jamais
+  const PHOTO_H = ROW_H - 4; // hauteur photo dans la ligne
+  const PHOTO_W = COL_PHOTO - 2; // largeur photo (légère marge)
 
   const {ht,tva,tvaAmt,ttc}=getTotaux();
   let even=false;
   produits.forEach(p=>{
     const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
 
-    // Hauteur de ligne : photos taille fixe, texte peut être plus long
-    const hasPhoto = p.photoInt || p.photoExt;
-    const PHOTO_H = 32;           // hauteur fixe de la photo — ne change jamais
-    const PHOTO_W = PHOTO_H * 4/3; // ~42.7mm, ratio 4:3
-    const photoGap = 3;
-    const photoColW = hasPhoto ? (PHOTO_W*2 + photoGap + 6) : 0;
-    const textX = m + photoColW + (hasPhoto ? 2 : 0);
-    const textW = W - m - textX - 2;
+    // Saut de page si nécessaire (ROW_H fixe)
+    if(y + ROW_H > pageBottom) { y = addNewPage(); even = false; }
 
-    // Préparer les lignes de désignation (wrap manuel)
+    // Fond alterné
+    if(even){ doc.setFillColor(250,248,245); doc.rect(m,y,W-m*2,ROW_H,'F'); }
+    doc.setDrawColor(220,220,220); doc.setLineWidth(0.2); doc.rect(m,y,W-m*2,ROW_H,'S');
+
+    // ── Col 1 : Vue intérieure ──
+    const py = y + 2;
+    if(p.photoInt) {
+      try { doc.addImage(p.photoInt, p.photoInt.startsWith('data:image/png')?'PNG':'JPEG', m+1, py, PHOTO_W, PHOTO_H); }
+      catch(e) { doc.setFillColor(230,230,230); doc.rect(m+1, py, PHOTO_W, PHOTO_H, 'F'); }
+    } else {
+      doc.setFillColor(240,240,240); doc.rect(m+1, py, PHOTO_W, PHOTO_H, 'F');
+    }
+
+    // ── Col 2 : Vue extérieure ──
+    const px2 = m + COL_PHOTO + COL_GAP;
+    if(p.photoExt) {
+      try { doc.addImage(p.photoExt, p.photoExt.startsWith('data:image/png')?'PNG':'JPEG', px2, py, PHOTO_W, PHOTO_H); }
+      catch(e) { doc.setFillColor(230,230,230); doc.rect(px2, py, PHOTO_W, PHOTO_H, 'F'); }
+    } else {
+      doc.setFillColor(240,240,240); doc.rect(px2, py, PHOTO_W, PHOTO_H, 'F');
+    }
+
+    // ── Col 3 : Descriptif ──
+    const tx = COL_TEXT_X;
+    // Réf
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
+    doc.text(p.numero, tx, y+5);
+    // Désignation
     const desigLines = (p.designation||cat.label).split('\n');
-    // Calculer hauteur nécessaire pour le texte
-    const lineH = 4.5;
+    const lineH = 4.2;
+    const maxLen = Math.floor(COL_TEXT_W / 1.75);
     const textLines = [];
     desigLines.forEach(line => {
-      // Split long lines roughly every 55 chars for textW
-      const maxLen = Math.floor(textW / 1.8);
       if(line.length <= maxLen) { textLines.push(line); }
       else {
         const words = line.split(' ');
@@ -3100,94 +3132,33 @@ function genererPDF() {
         if(cur) textLines.push(cur);
       }
     });
-    // Ajouter prix/qté lines
-    textLines.push('');
-    const prix_line = `Qté: ${p.quantite}   P.U. HT: ${fmtEur(p.prixUnitaire)}${p.withPose?' + Pose: '+fmtEur(p.prixPose):''}   Total: ${fmtEur(getPrixTotal(p))}`;
-    textLines.push(prix_line);
-
-    const textH = textLines.length * lineH + 8;
-    // rowH = max(texte, photo+label) — les photos ont une taille fixe
-    const rowH = Math.max(hasPhoto ? PHOTO_H + 8 : 0, textH, 20);
-
-    // Saut de page si nécessaire
-    if(y + rowH > pageBottom) { y = addNewPage(); even = false; }
-
-    // Fond alterné
-    if(even){ doc.setFillColor(250,248,245); doc.rect(m,y,W-m*2,rowH,'F'); }
-    doc.setDrawColor(238,238,238); doc.setLineWidth(0.3); doc.rect(m,y,W-m*2,rowH,'S');
-
-    // Photos : taille FIXE, centrées verticalement dans la ligne
-    if(hasPhoto) {
-      let px = m+2;
-      const py = y + Math.max(2, (rowH - PHOTO_H - 5) / 2); // centré verticalement
-      [p.photoInt, p.photoExt].forEach((photo, i) => {
-        if(photo) {
-          try {
-            const fmt = photo.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-            doc.addImage(photo, fmt, px, py, PHOTO_W, PHOTO_H);
-          } catch(e) {
-            doc.setFillColor(220,220,220);
-            doc.roundedRect(px, py, PHOTO_W, PHOTO_H, 1, 1, 'F');
-          }
-        } else {
-          doc.setFillColor(220,220,220);
-          doc.roundedRect(px, py, PHOTO_W, PHOTO_H, 1, 1, 'F');
-        }
-        // Label DANS le bas de la photo — fond gris foncé opaque
-        doc.setFillColor(40, 40, 40);
-        doc.rect(px, py + PHOTO_H - 5, PHOTO_W, 5, 'F');
-        doc.setFontSize(5); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
-        doc.text(i===0 ? 'Vue int.' : 'Vue ext.', px + PHOTO_W/2, py + PHOTO_H - 1.5, {align:'center'});
-        doc.setTextColor(...dark);
-        px += PHOTO_W + photoGap;
-      });
-    }
-
-    // Réf
-    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
-    doc.text(p.numero, textX, y+5);
-
-    // Lignes de désignation
-    doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
-    let ty = y+5+lineH;
-    textLines.forEach((line, i) => {
-      if(!line) return;
-      if(i === textLines.length-1) {
-        // Ligne prix en gras
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...navy);
-        doc.text(line, textX, ty);
-        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...dark);
-      } else if(line.startsWith('Uw ') || line.includes(' — Uw ') || (line.includes('Uw') && (line.includes('g ') || line.includes('TL ')))) {
-        // Ligne thermique : Uw en gras, reste normal
-        doc.setFontSize(6.5);
-        const uwMatch = line.match(/^(Uw [^\s—]+)/);
-        if(uwMatch) {
-          // "Uw 1.2 W/m²K" en gras + suite en normal
-          doc.setFont('helvetica','bold'); doc.setTextColor(13,27,42);
-          doc.text(uwMatch[1], textX, ty);
-          const rest = line.slice(uwMatch[1].length);
-          if(rest) {
-            const uwW = doc.getTextWidth(uwMatch[1]);
-            doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
-            doc.text(rest, textX + uwW, ty);
-          }
-        } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...dark);
+    let ty = y + 5 + lineH;
+    // Max lignes affichables dans ROW_H
+    const maxLines = Math.floor((ROW_H - 10) / lineH);
+    textLines.slice(0, maxLines).forEach((line) => {
+      if(!line) { ty += lineH; return; }
+      if(line.startsWith('Uw ') || (line.includes('Uw') && line.includes('g '))) {
+        const uwM = line.match(/^(Uw [^\s—]+(?:\s+[^\s—]+)?)/);
+        if(uwM) {
+          doc.setFont('helvetica','bold'); doc.setTextColor(...navy);
+          doc.text(uwM[1], tx, ty);
+          const rest = line.slice(uwM[1].length);
+          if(rest) { doc.setFont('helvetica','normal'); doc.setTextColor(...dark); doc.text(rest, tx + doc.getTextWidth(uwM[1]), ty); }
           doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
-          doc.text(line, textX, ty);
-        }
-        doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
-      } else {
-        doc.setFontSize(6.5);
-        doc.text(line, textX, ty);
-      }
+        } else { doc.text(line, tx, ty); }
+      } else { doc.text(line, tx, ty); }
       ty += lineH;
     });
 
-    // Total aligné à droite
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...navy);
-    doc.text(fmtEur(getPrixTotal(p)), W-m-2, y+rowH-3, {align:'right'});
+    // ── Col 4 : Total HT ──
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...navy);
+    doc.text(fmtEur(getPrixTotal(p)), W-m-2, y + ROW_H/2 + 2, {align:'right'});
+    // Qté + PU en petit
+    doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor(...gray);
+    doc.text(`x${p.quantite}  ${fmtEur(p.prixUnitaire)}`, W-m-2, y + ROW_H/2 + 6, {align:'right'});
 
-    y+=rowH; even=!even;
+    y += ROW_H; even=!even;
   });
   y+=4;
 
