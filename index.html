@@ -3004,6 +3004,16 @@ function genererPDF() {
   const navy=[13,27,42], copper=[200,120,42], gold=[212,168,67];
   const lightBg=[248,244,239], white=[255,255,255], dark=[26,26,26], gray=[102,102,102];
 
+  // ── Layout colonnes FIXES ─────────────────────
+  const COL_PHOTO  = 38;
+  const COL_GAP    = 2;
+  const COL_TOTAL  = 22;
+  const COL_TEXT_X = m + COL_PHOTO*2 + COL_GAP*2 + 2;
+  const COL_TEXT_W = W - m - COL_TEXT_X - COL_TOTAL - 4;
+  const ROW_H      = 40;
+  const PHOTO_H    = ROW_H - 4;
+  const PHOTO_W    = COL_PHOTO - 2;
+
   // Header
   doc.setFillColor(...navy); doc.rect(0,0,W,32,'F');
   // Logo PNG — grand
@@ -3069,16 +3079,6 @@ function genererPDF() {
     return ny + 7;
   }
 
-
-  // ── Layout colonnes FIXES ─────────────────────
-  const COL_PHOTO = 38;      // largeur de chaque colonne photo (mm)
-  const COL_GAP   = 2;       // espace entre photos
-  const COL_TOTAL = 22;      // largeur colonne Total HT
-  const COL_TEXT_X = m + COL_PHOTO*2 + COL_GAP*2 + 2; // X départ descriptif
-  const COL_TEXT_W = W - m - COL_TEXT_X - COL_TOTAL - 4; // largeur descriptif
-  const ROW_H = 40;          // hauteur ligne FIXE — ne change jamais
-  const PHOTO_H = ROW_H - 4; // hauteur photo dans la ligne
-  const PHOTO_W = COL_PHOTO - 2; // largeur photo (légère marge)
 
   const {ht,tva,tvaAmt,ttc}=getTotaux();
   let even=false;
