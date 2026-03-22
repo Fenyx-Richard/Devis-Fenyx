@@ -651,7 +651,7 @@ function renderFenVantaux(id) {
       <select id="fen-v-${id}-${i}" onchange="onFenVantailOuvChange(${id},${i})">
         <option value="">— Ouvrant —</option>
         <option value="Fixe"   ${v.ouv==='Fixe'?'selected':''}>Fixe</option>
-        <option value="OF"     ${v.ouv==='OF'?'selected':''}>OF (oscillo-battant)</option>
+        <option value="OF"     ${v.ouv==='OF'?'selected':''}>OF</option>
         <option value="OF+OB"  ${v.ouv==='OF+OB'?'selected':''}>OF + OB</option>
       </select>
     </div>`).join('');
@@ -670,7 +670,7 @@ function renderFenImposteOuv(id) {
       <select id="fen-imposte-ouv-${id}" onchange="onFenImpostOuvChange(${id})">
         <option value="">— Choisir —</option>
         <option value="Fixe" ${p.fenImpostOuv==='Fixe'?'selected':''}>Fixe</option>
-        <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB (oscillo-battant)</option>
+        <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB</option>
       </select>
     </div>`;
 }
@@ -2622,7 +2622,7 @@ function standardConfigHTML(p, IS, matOpts, fabHide, fabOpts, gamHide, gamOpts, 
         <select id="fen-imposte-ouv-${id}" onchange="onFenImpostOuvChange(${id})">
           <option value="" ${!p.fenImpostOuv?'selected':''}>— Choisir —</option>
           <option value="Fixe" ${p.fenImpostOuv==='Fixe'?'selected':''}>Fixe</option>
-          <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB (oscillo-battant)</option>
+          <option value="OB"   ${p.fenImpostOuv==='OB'?'selected':''}>OB</option>
         </select>
       </div>
     </div>
@@ -2633,7 +2633,7 @@ function standardConfigHTML(p, IS, matOpts, fabHide, fabOpts, gamHide, gamOpts, 
           <select id="fen-v-${id}-${i}" onchange="onFenVantailOuvChange(${id},${i})">
             <option value="">— Ouvrant —</option>
             <option value="Fixe"  ${v.ouv==='Fixe' ?'selected':''}>Fixe</option>
-            <option value="OF"    ${v.ouv==='OF'   ?'selected':''}>OF (oscillo-battant)</option>
+            <option value="OF"    ${v.ouv==='OF'   ?'selected':''}>OF</option>
             <option value="OF+OB" ${v.ouv==='OF+OB'?'selected':''}>OF + OB</option>
           </select>
         </div>`).join('')}
@@ -3085,42 +3085,13 @@ function genererPDF() {
   produits.forEach(p=>{
     const cat=CATALOGUE[p.type]||CATALOGUE['autre'];
 
-    // Saut de page si nécessaire (ROW_H fixe)
-    if(y + ROW_H > pageBottom) { y = addNewPage(); even = false; }
-
-    // Fond alterné
-    if(even){ doc.setFillColor(250,248,245); doc.rect(m,y,W-m*2,ROW_H,'F'); }
-    doc.setDrawColor(220,220,220); doc.setLineWidth(0.2); doc.rect(m,y,W-m*2,ROW_H,'S');
-
-    // ── Col 1 : Vue intérieure ──
-    const py = y + 2;
-    if(p.photoInt) {
-      try { doc.addImage(p.photoInt, p.photoInt.startsWith('data:image/png')?'PNG':'JPEG', m+1, py, PHOTO_W, PHOTO_H); }
-      catch(e) { doc.setFillColor(230,230,230); doc.rect(m+1, py, PHOTO_W, PHOTO_H, 'F'); }
-    } else {
-      doc.setFillColor(240,240,240); doc.rect(m+1, py, PHOTO_W, PHOTO_H, 'F');
-    }
-
-    // ── Col 2 : Vue extérieure ──
-    const px2 = m + COL_PHOTO + COL_GAP;
-    if(p.photoExt) {
-      try { doc.addImage(p.photoExt, p.photoExt.startsWith('data:image/png')?'PNG':'JPEG', px2, py, PHOTO_W, PHOTO_H); }
-      catch(e) { doc.setFillColor(230,230,230); doc.rect(px2, py, PHOTO_W, PHOTO_H, 'F'); }
-    } else {
-      doc.setFillColor(240,240,240); doc.rect(px2, py, PHOTO_W, PHOTO_H, 'F');
-    }
-
-    // ── Col 3 : Descriptif ──
-    const tx = COL_TEXT_X;
-    // Réf
-    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
-    doc.text(p.numero, tx, y+5);
-    // Désignation
+    // ── Préparer les lignes de texte ────────────
     const desigLines = (p.designation||cat.label).split('\n');
     const lineH = 4.2;
     const maxLen = Math.floor(COL_TEXT_W / 1.75);
     const textLines = [];
     desigLines.forEach(line => {
+      if(!line) { textLines.push(''); return; }
       if(line.length <= maxLen) { textLines.push(line); }
       else {
         const words = line.split(' ');
@@ -3132,12 +3103,44 @@ function genererPDF() {
         if(cur) textLines.push(cur);
       }
     });
+
+    // ── Hauteur : max(hauteur texte, hauteur photo fixe) ──
+    const textH  = 5 + lineH + textLines.length * lineH + 4; // réf + lignes + marge
+    const rowH   = Math.max(textH, PHOTO_H + 4);             // jamais plus petit que la photo
+
+    // Saut de page si nécessaire
+    if(y + rowH > pageBottom) { y = addNewPage(); even = false; }
+
+    // Fond alterné
+    if(even){ doc.setFillColor(250,248,245); doc.rect(m,y,W-m*2,rowH,'F'); }
+    doc.setDrawColor(220,220,220); doc.setLineWidth(0.2); doc.rect(m,y,W-m*2,rowH,'S');
+
+    // ── Col 1 : Vue intérieure — taille FIXE, calée en haut ──
+    const py = y + 2;
+    if(p.photoInt) {
+      try { doc.addImage(p.photoInt, p.photoInt.startsWith('data:image/png')?'PNG':'JPEG', m+1, py, PHOTO_W, PHOTO_H); }
+      catch(e) { doc.setFillColor(230,230,230); doc.rect(m+1, py, PHOTO_W, PHOTO_H, 'F'); }
+    } else {
+      doc.setFillColor(240,240,240); doc.rect(m+1, py, PHOTO_W, PHOTO_H, 'F');
+    }
+
+    // ── Col 2 : Vue extérieure — taille FIXE ──
+    const px2 = m + COL_PHOTO + COL_GAP;
+    if(p.photoExt) {
+      try { doc.addImage(p.photoExt, p.photoExt.startsWith('data:image/png')?'PNG':'JPEG', px2, py, PHOTO_W, PHOTO_H); }
+      catch(e) { doc.setFillColor(230,230,230); doc.rect(px2, py, PHOTO_W, PHOTO_H, 'F'); }
+    } else {
+      doc.setFillColor(240,240,240); doc.rect(px2, py, PHOTO_W, PHOTO_H, 'F');
+    }
+
+    // ── Col 3 : Descriptif — hauteur adaptative ──
+    const tx = COL_TEXT_X;
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(150,100,40);
+    doc.text(p.numero, tx, y+5);
     doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...dark);
     let ty = y + 5 + lineH;
-    // Max lignes affichables dans ROW_H
-    const maxLines = Math.floor((ROW_H - 10) / lineH);
-    textLines.slice(0, maxLines).forEach((line) => {
-      if(!line) { ty += lineH; return; }
+    textLines.forEach((line) => {
+      if(!line) { ty += lineH * 0.6; return; }
       if(line.startsWith('Uw ') || (line.includes('Uw') && line.includes('g '))) {
         const uwM = line.match(/^(Uw [^\s—]+(?:\s+[^\s—]+)?)/);
         if(uwM) {
@@ -3147,18 +3150,20 @@ function genererPDF() {
           if(rest) { doc.setFont('helvetica','normal'); doc.setTextColor(...dark); doc.text(rest, tx + doc.getTextWidth(uwM[1]), ty); }
           doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
         } else { doc.text(line, tx, ty); }
-      } else { doc.text(line, tx, ty); }
+      } else {
+        doc.text(line, tx, ty);
+      }
       ty += lineH;
     });
 
     // ── Col 4 : Total HT ──
+    const midY = y + rowH/2;
     doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...navy);
-    doc.text(fmtEur(getPrixTotal(p)), W-m-2, y + ROW_H/2 + 2, {align:'right'});
-    // Qté + PU en petit
+    doc.text(fmtEur(getPrixTotal(p)), W-m-2, midY + 1, {align:'right'});
     doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor(...gray);
-    doc.text(`x${p.quantite}  ${fmtEur(p.prixUnitaire)}`, W-m-2, y + ROW_H/2 + 6, {align:'right'});
+    doc.text(`x${p.quantite}  ${fmtEur(p.prixUnitaire)}`, W-m-2, midY + 5, {align:'right'});
 
-    y += ROW_H; even=!even;
+    y += rowH; even=!even;
   });
   y+=4;
 
