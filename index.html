@@ -3298,6 +3298,8 @@ function sauvegarderDevis() {
   if(existing >= 0) list[existing] = entry;
   else list.push(entry);
   localStorage.setItem(SAVED_KEY, JSON.stringify(list));
+  // Sync l'autosave pour que le rechargement reflète la dernière sauvegarde manuelle
+  try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(entry.state)); } catch(e) {}
   showToast(`✅ Devis « ${nom} » sauvegardé`);
   renderSavedList();
 }
@@ -3308,6 +3310,8 @@ function chargerDevis(nom) {
   if(!entry) return;
   if(!confirm(`Charger « ${nom} » ? Le devis actuel sera remplacé.`)) return;
   restoreState(entry.state);
+  // Écraser l'autosave avec l'état chargé pour éviter toute confusion au prochain rechargement
+  try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(entry.state)); } catch(e) {}
   showToast(`📂 Devis « ${nom} » chargé`);
 }
 
@@ -3373,15 +3377,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   const numInput = document.getElementById('devisNumInput');
   if(numInput) numInput.value = devisNum;
 
-  // Restaurer la sauvegarde automatique si elle existe
+  // Restaurer automatiquement la dernière session (autosave)
+  // L'autosave est toujours synchronisé avec la dernière action (sauvegarde manuelle ou modification)
   try {
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if(saved) {
       const state = JSON.parse(saved);
-      const age = Date.now() - (state.savedAt||0);
-      const ageMin = Math.round(age/60000);
       if(state.produits?.length > 0) {
-        const msg = `Une sauvegarde automatique existe (il y a ${ageMin < 60 ? ageMin+'min' : Math.round(ageMin/60)+'h'}).\nVoulez-vous la restaurer ?`;
+        const age = Date.now() - (state.savedAt||0);
+        const ageMin = Math.round(age/60000);
+        const ageStr = ageMin < 60 ? ageMin+'min' : Math.round(ageMin/60)+'h';
+        const msg = `Reprendre le devis en cours (sauvegardé il y a ${ageStr}) ?`;
         if(confirm(msg)) { restoreState(state); return; }
       }
     }
