@@ -3172,7 +3172,12 @@ function genererPDF() {
     doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...navy);
     doc.text(fmtEur(getPrixTotal(p)), W-m-2, midY + 1, {align:'right'});
     doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor(...gray);
-    doc.text(`x${p.quantite}  ${fmtEur(p.prixUnitaire)}`, W-m-2, midY + 5, {align:'right'});
+    if(p.withPose && p.prixPose) {
+      doc.text(`x${p.quantite}  Fourn. ${fmtEur(p.prixUnitaire)}`, W-m-2, midY + 5, {align:'right'});
+      doc.text(`Pose ${fmtEur(p.prixPose)}`, W-m-2, midY + 9, {align:'right'});
+    } else {
+      doc.text(`x${p.quantite}  ${fmtEur(p.prixUnitaire)}`, W-m-2, midY + 5, {align:'right'});
+    }
 
     y += rowH; even=!even;
   });
@@ -3194,22 +3199,24 @@ function genererPDF() {
   doc.text('TOTAL TTC',totX,y+7); doc.setTextColor(180,130,40); doc.text(fmtEur(ttc),W-m,y+7,{align:'right'});
   y+=15;
 
-  // Conditions
+  // Conditions — hauteur dynamique selon lignes présentes
   const acompte=document.getElementById('acompte')?.value||'30';
   const validite=document.getElementById('validite')?.value||'30';
   const delai=document.getElementById('delai')?.value||'';
   const notes=document.getElementById('notes')?.value||'';
-  doc.setFillColor(...lightBg); doc.rect(m,y,W-m*2,38,'F');
+  const condLines = [acompte,validite,delai,'rib',notes].filter(Boolean).length;
+  const condH = Math.max(28, condLines * 5 + 10);
+  doc.setFillColor(...lightBg); doc.rect(m,y,W-m*2,condH,'F');
   let cy=y+5;
   doc.setFontSize(7); doc.setTextColor(...gray);
   if(acompte){doc.setFont('helvetica','bold');doc.text('Acompte : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(`${acompte}% à la commande, soit ${fmtEur(ttc*parseFloat(acompte)/100)}`,m+22,cy);cy+=5;}
   if(validite){doc.setFont('helvetica','bold');doc.text('Validité : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(`${validite} jours à compter du ${dateStr}`,m+22,cy);cy+=5;}
-  if(delai){doc.setFont('helvetica','bold');doc.text('Délai : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(delai,m+22,cy);cy+=5;}
+  if(delai){doc.setFont('helvetica','bold');doc.text('Délai travaux : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(delai,m+32,cy);cy+=5;}
   // RIB
   doc.setFont('helvetica','bold');doc.text('RIB : ',m+3,cy);
   doc.setFont('helvetica','normal');doc.text('IBAN FR76 1627 5006 0008 0031 5707 168  ·  BIC CEPAFRPP627',m+14,cy);cy+=5;
-  if(notes){doc.setFont('helvetica','bold');doc.text('Remarques : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(notes.substring(0,100),m+28,cy);}
-  y+=43;
+  if(notes){doc.setFont('helvetica','bold');doc.text('Remarques : ',m+3,cy);doc.setFont('helvetica','normal');doc.text(notes.substring(0,100),m+28,cy);cy+=5;}
+  y += condH + 5;
 
   // Signature client uniquement
   const sw=W-m*2;
@@ -3292,16 +3299,22 @@ function autosave() {
 function sauvegarderDevis() {
   const nom = prompt('Nom de la sauvegarde :', document.getElementById('clientNom')?.value || 'Devis sans nom');
   if(!nom) return;
-  const list = JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');
-  const existing = list.findIndex(d => d.name === nom);
-  const entry = { name: nom, state: collectState() };
-  if(existing >= 0) list[existing] = entry;
-  else list.push(entry);
-  localStorage.setItem(SAVED_KEY, JSON.stringify(list));
-  // Sync l'autosave pour que le rechargement reflète la dernière sauvegarde manuelle
-  try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(entry.state)); } catch(e) {}
-  showToast(`✅ Devis « ${nom} » sauvegardé`);
-  renderSavedList();
+  try {
+    const list = JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');
+    const existing = list.findIndex(d => d.name === nom);
+    const entry = { name: nom.trim(), state: collectState() };
+    if(existing >= 0) list[existing] = entry;
+    else list.push(entry);
+    const json = JSON.stringify(list);
+    localStorage.setItem(SAVED_KEY, json);
+    // Sync autosave
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(entry.state));
+    showToast(`✅ Devis « ${nom} » sauvegardé`);
+    renderSavedList();
+  } catch(e) {
+    // Probablement quota dépassé (photos volumineuses)
+    alert('❌ Sauvegarde impossible : espace insuffisant.\nConseil : supprimez d\'anciennes sauvegardes ou réduisez les photos.');
+  }
 }
 
 function chargerDevis(nom) {
