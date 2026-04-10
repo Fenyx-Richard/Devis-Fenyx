@@ -143,15 +143,19 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--copper);cursor:po
     <p>Générateur de devis pro</p>
   </div>
   <div class="header-actions" style="position:relative">
-    <button class="btn btn-ghost btn-sm" onclick="sauvegarderDevis()" title="Sauvegarder ce devis">💾 Sauvegarder</button>
-    <button class="btn btn-ghost btn-sm" onclick="toggleSavePanel()" title="Voir les devis sauvegardés">📂 Mes devis</button>
+    <button class="btn btn-ghost btn-sm" onclick="exporterFichier()" title="Exporter le devis en fichier .json sur l'iPad">⬇ Exporter</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()" title="Charger un devis depuis un fichier .json">⬆ Importer</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importerFichier(event)">
+    <button class="btn btn-ghost btn-sm" onclick="toggleSavePanel()" title="Sauvegardes rapides (mémoire)">💾 Mémoire</button>
     <button class="btn btn-ghost btn-sm" onclick="reinitialiser()">🔄 Nouveau</button>
     <button class="btn btn-primary btn-sm" onclick="genererPDF()">📄 PDF</button>
-    <div id="save-panel" style="display:none;position:absolute;top:44px;right:0;width:300px;background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:14px;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:11px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;font-weight:700">Devis sauvegardés</span>
+    <div id="save-panel" style="display:none;position:absolute;top:44px;right:0;width:320px;background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:14px;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;letter-spacing:1.5px;color:var(--copper);text-transform:uppercase;font-weight:700">Sauvegardes rapides</span>
         <span onclick="toggleSavePanel()" style="cursor:pointer;color:var(--text-muted);font-size:16px;line-height:1">✕</span>
       </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">Stockage temporaire (limité). Pour archiver, utilisez <b>⬇ Exporter</b>.</div>
+      <button class="btn btn-ghost btn-sm" onclick="sauvegarderDevis()" style="width:100%;margin-bottom:8px;justify-content:center">+ Sauvegarder le devis actuel</button>
       <div id="saved-list"></div>
     </div>
   </div>
@@ -3239,8 +3243,48 @@ function genererPDF() {
 // RÉINITIALISER
 // ══════════════════════════════════════════════
 // ══════════════════════════════════════════════
-// SAUVEGARDE AUTOMATIQUE & GESTION DEVIS
+// EXPORT / IMPORT FICHIER (iPad)
 // ══════════════════════════════════════════════
+function exporterFichier() {
+  const state = collectState();
+  const nom = (state.client?.nom || 'devis').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const date = new Date().toISOString().slice(0,10);
+  const filename = `Fenyx_${nom}_${date}.json`;
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+  showToast(`⬇ Fichier « ${filename} » exporté`);
+}
+
+function importerFichier(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const state = JSON.parse(e.target.result);
+      if(!state.produits) throw new Error('Format invalide');
+      if(!confirm(`Charger le devis depuis « ${file.name} » ?\nLe devis actuel sera remplacé.`)) return;
+      restoreState(state);
+      // Sync autosave
+      try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state)); } catch(err) {}
+      showToast(`⬆ Devis chargé depuis « ${file.name} »`);
+    } catch(err) {
+      alert('❌ Fichier invalide ou corrompu.');
+    }
+  };
+  reader.readAsText(file);
+  // Reset input pour permettre de recharger le même fichier
+  event.target.value = '';
+}
+
+
 const AUTOSAVE_KEY = 'fenyx_autosave';
 const SAVED_KEY    = 'fenyx_saved_devis';
 
