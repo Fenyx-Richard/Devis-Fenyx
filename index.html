@@ -254,6 +254,7 @@ const ALUPLAST_FENPF = [
   { gamme: "IDEAL 7000", epaisseur: "85mm" },
   { gamme: "IDEAL 8000", epaisseur: "85mm" },
   { gamme: "NEO MD",     epaisseur: "76mm" },
+  { gamme: "Energeto NEO", epaisseur: "76mm" },
 ];
 // Gammes Aluplast baie PSK
 const ALUPLAST_PSK = [
@@ -3232,7 +3233,7 @@ function genererPDF() {
   // Footer
   doc.setFillColor(...navy); doc.rect(0,H-12,W,12,'F');
   doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(138,154,176);
-  doc.text('Fenyx Ouvertures  ·  SIREN 101574127  ·  133 rue Louis Montois 59790 Ronchin',W/2,H-5,{align:'center'});
+  doc.text('Fenyx Ouvertures  ·  SIRET 10157412700011  ·  133 rue Louis Montois 59790 Ronchin',W/2,H-5,{align:'center'});
 
   const pdfBlob = doc.output('blob');
   const url = URL.createObjectURL(pdfBlob);
